@@ -18,41 +18,41 @@ class Board():
 
         for key in self.board.keys():
             if key[1] == '2':
-                self.board[key] = Pawn('w', key, 'P')
+                self.board[key] = Pawn('w', key)
 
             elif key[1] == '7':
-                self.board[key] = Pawn('b', key, 'P')
+                self.board[key] = Pawn('b', key)
 
             elif key[1] == '1':
                 if key[0] == 'a' or key[0] == 'h':
-                    self.board[key] = Rook('w', key, 'R')
+                    self.board[key] = Rook('w', key)
 
                 elif key[0] == 'b' or key[0] == 'g':
-                    self.board[key] = Knight('w', key, 'N')
+                    self.board[key] = Knight('w', key)
 
                 elif key[0] == 'c' or key[0] == 'f':
-                    self.board[key] = Bishop('w', key, 'B')
+                    self.board[key] = Bishop('w', key)
                 elif key[0] == 'd':
-                    self.board[key] = Queen('w', key, 'Q') 
+                    self.board[key] = Queen('w', key) 
 
                 elif key[0] == 'e':
-                    self.board[key] = King('w', key, 'K') 
+                    self.board[key] = King('w', key) 
             
             elif key[1] == '8':
                 if key[0] == 'a' or key[0] == 'h':
-                    self.board[key] = Rook('b', key, 'R')
+                    self.board[key] = Rook('b', key)
 
                 elif key[0] == 'b' or key[0] == 'g':
-                    self.board[key] = Knight('b', key, 'N')
+                    self.board[key] = Knight('b', key)
 
                 elif key[0] == 'c' or key[0] == 'f':
-                    self.board[key] = Bishop('b', key, 'B')
+                    self.board[key] = Bishop('b', key)
 
                 elif key[0] == 'd':
-                    self.board[key] = Queen('b', key, 'Q') 
+                    self.board[key] = Queen('b', key) 
 
                 elif key[0] == 'e':
-                    self.board[key] = King('b', key, 'K') 
+                    self.board[key] = King('b', key) 
     def print_board(self):
         i = 1
         for key, value in self.board.items():
@@ -72,17 +72,17 @@ class Board():
             if value == '__':
                 self.board[key] = '__'
             elif value[1] == 'P':
-                self.board[key] = Pawn(value[0], key, value[1])
+                self.board[key] = Pawn(value[0], key)
             elif value[1] == 'R':
-                self.board[key] = Rook(value[0], key, value[1])
+                self.board[key] = Rook(value[0], key)
             elif value[1] == 'N':
-                self.board[key] = Knight(value[0], key, value[1])
+                self.board[key] = Knight(value[0], key)
             elif value[1] == 'B':
-                self.board[key] = Bishop(value[0], key, value[1])
+                self.board[key] = Bishop(value[0], key)
             elif value[1] == 'Q':
-                self.board[key] = Queen(value[0], key, value[1])
+                self.board[key] = Queen(value[0], key)
             elif value[1] == 'K':
-                self.board[key] = King(value[0], key, value[1])
+                self.board[key] = King(value[0], key)
         print('Custom Board Loaded')
 
     def generate_preset(self):

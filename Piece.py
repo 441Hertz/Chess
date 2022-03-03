@@ -1,4 +1,7 @@
+from re import I, S
 import string
+
+from numpy import can_cast
 letters = string.ascii_lowercase
 class Piece():
     """
@@ -222,15 +225,15 @@ class Piece():
             
 
 class Rook(Piece):
-    def __init__(self, color, position, name):
-        super().__init__(color, position, name)
-
+    def __init__(self, color, position):
+        super().__init__(color, position, 'R')
+        self.moves = 0
     def is_valid_move(self, board, start, to):
         return self.line(board, start, to)
 
 class Knight(Piece):
-    def __init__(self, color, position, name):
-        super().__init__(color, position, name)
+    def __init__(self, color, position):
+        super().__init__(color, position, 'N')
 
     def is_valid_move(self, board, start, to):
         """ 
@@ -244,35 +247,54 @@ class Knight(Piece):
         return False
 
 class Bishop(Piece):
-    def __init__(self, color, position, name):
-        super().__init__(color, position, name)
+    def __init__(self, color, position):
+        super().__init__(color, position, 'B')
 
     def is_valid_move(self, board, start, to):
         return self.diagonal(board, start, to)
 
 class Queen(Piece):
-    def __init__(self, color, position, name):
-        super().__init__(color, position, name)
+    def __init__(self, color, position):
+        super().__init__(color, position, 'Q')
 
     def is_valid_move(self, board, start, to):
         return self.line(board, start, to) or self.diagonal(board, start, to)
 
 class King(Piece):
-    def __init__(self, color, position, name):
-        super().__init__(color, position, name)
+    def __init__(self, color, position):
+        super().__init__(color, position, 'K')
         self.moves = 0
 
     def is_valid_move(self, board, start, to):
         if self.replaceable(board, to): 
+            if self.can_castle(board, to):
+                self.apply_unit_vector(board, self.get_position(), self.x_diff(self.get_position(), to), 0)
+                self.moves += 1
+                return True
             return abs(self.x_diff(start, to)) < 2 and abs(self.y_diff(start, to)) < 2
         return False
     
-    def can_castle(self):
-        pass
+    def can_castle(self, board, to):
+        if self.moves == 0:
+            i = self.unit_vector(self.get_position(), to)['i']
+            if i < 0:
+                rook_coord = 'a' + self.get_position()[1]
+            elif i > 0:
+                rook_coord = 'a' + self.get_position()[1]
+            if board[rook_coord] != '__':
+                if board[rook_coord].__str__() == self.get_color() + 'R':
+                    if board[rook_coord].moves == 0:
+                        if self.x_diff(self.get_position(), to) == 2 and self.x_diff(self.get_position(), to) == 0:
+                            pass
+                            # TODO 
+                            # Check if the back row is empty
+                            # Check if it is legal
+                            # and that it does not "go through checks"
+        return False
 
 class Pawn(Piece):
-    def __init__(self, color, position, name):
-        super().__init__(color, position, name)
+    def __init__(self, color, position):
+        super().__init__(color, position, 'P')
         self.moves = 0
         self.last_move = 1
     def is_valid_move(self, board, start, to):
