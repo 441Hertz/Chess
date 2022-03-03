@@ -16,13 +16,13 @@ class Chess():
                 print('Invalid piece!')
                 promote = input('Promote pawn to: ').lower()
             if promote == 'r':
-                board[to] = Rook(board[to].get_color(), to)
+                board[to] = Rook(board[to].get_col(), to)
             elif promote == 'n':
-                board[to] = Knight(board[to].get_color(), to)
+                board[to] = Knight(board[to].get_col(), to)
             elif promote == 'b':
-                board[to] = Bishop(board[to].get_color(), to)
+                board[to] = Bishop(board[to].get_col(), to)
             elif promote == 'q':
-                board[to] = Queen(board[to].get_color(), to)
+                board[to] = Queen(board[to].get_col(), to)
     def whose_move(self):
         if self.move_counter % 2 == 1:
             return ('w', 'white')
@@ -31,7 +31,7 @@ class Chess():
         return (self.move_counter + 1) // 2
     def correct_turn(self, start):
         if not self.dev_mode:
-            return self.board.board[start].get_color() == self.whose_move()[0]
+            return self.board.board[start].get_col() == self.whose_move()[0]
         return True
     def is_piece(self, start):
         return self.board.board[start] != '__'
@@ -55,12 +55,14 @@ class Chess():
             if self.correct_turn(start):
                 valid = board[start].is_valid_move(board, start, to)  
                 if valid: 
+                    print(board[start])
                     legal = board[start].is_legal(board, start, to)
                     if legal:
                         print(board[start].__str__() + f' moved from {start} to {to}')
+                        # This could be a method
                         board[to] = board[start]
                         board[start] = '__'
-                        board[to].update_position(to)
+                        board[to].update_pos(to)
                         self.promotion(board, to)
                         self.update_counter()
                         if board[to].mate(board, to):
@@ -82,16 +84,16 @@ if __name__ == "__main__":
     dev_mode = True
     chess = Chess(dev_mode)
     chess.board.custom_board({
-'a8':'__', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'__', 'f8':'__', 'g8':'__', 'h8':'bK',
+'a8':'bK', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'__', 'f8':'__', 'g8':'__', 'h8':'__',
 'a7':'__', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
 'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
 'a5':'__', 'b5':'__', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
 'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
 'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
-'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'bQ', 'e2':'__', 'f2':'__', 'g2':'__', 'h2':'bP',
-'a1':'wK', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'__', 'f1':'__', 'g1':'__', 'h1':'__',
+'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'__', 'g2':'__', 'h2':'__',
+'a1':'wR', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'wR',
 })
-    chess.move('h2', 'h1')
+    chess.move('e1', 'g1')
 
     # while True:
     #     start = input("From: ")

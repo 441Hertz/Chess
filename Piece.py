@@ -1,7 +1,4 @@
-from re import I, S
 import string
-
-from numpy import can_cast
 letters = string.ascii_lowercase
 class Piece():
     """
@@ -21,9 +18,9 @@ class Piece():
     @classmethod
     def get_counter(cls):
         return cls.move_counter
-    def get_position(self):
+    def pos(self):
         return self.position
-    def update_position(self, to):
+    def update_pos(self, to):
         self.position = to
     def is_valid_move(self):
         return False
@@ -39,7 +36,7 @@ class Piece():
         return self.color + self.name
     def get_name(self):
         return self.name
-    def get_color(self):
+    def get_col(self):
         return self.color
 
     def replaceable(self, board, to):
@@ -52,11 +49,12 @@ class Piece():
        
         if board[to] == '__':
             return True
-        elif self.get_color() != board[to].get_color():
+        elif self.get_col() != board[to].get_col():
             return True
         return False
 
     #Could change to static methods
+    # Also call it dx?
     def x_diff(self, start, to):
         """
         Returns the difference between start and end x coordinates
@@ -153,9 +151,9 @@ class Piece():
     def all_pieces(self, board):
         return [value for value in board.values() if value != '__']
     def enemy_pieces(self, board):
-        return [value for value in self.all_pieces(board) if value.get_color() != self.get_color()]
+        return [value for value in self.all_pieces(board) if value.get_col() != self.get_col()]
     def ally_pieces(self, board):
-        return [value for value in self.all_pieces(board) if value.get_color() == self.get_color()]
+        return [value for value in self.all_pieces(board) if value.get_col() == self.get_col()]
     def ally_king(self, board):
         return [value for value in self.ally_pieces(board) if value.get_name() == 'K'][0]
     def enemy_king(self, board):
@@ -168,18 +166,18 @@ class Piece():
                 ]
 
         for v in vector:
-            escape_coord = self.apply_unit_vector(board, self.enemy_king(board).get_position(), v[0], v[1])
+            escape_coord = self.apply_unit_vector(board, self.enemy_king(board).pos(), v[0], v[1])
             if  escape_coord != -1:
-                valid = self.enemy_king(board).is_valid_move(board, self.enemy_king(board).get_position(), escape_coord)
-                legal = self.enemy_king(board).is_legal(board, self.enemy_king(board).get_position(), escape_coord)
+                valid = self.enemy_king(board).is_valid_move(board, self.enemy_king(board).pos(), escape_coord)
+                legal = self.enemy_king(board).is_legal(board, self.enemy_king(board).pos(), escape_coord)
                 if valid and legal :
                     return True
         return False
         
     def capture(self, board, to):
         for piece in self.enemy_pieces(board):
-            valid = piece.is_valid_move(board, piece.get_position(), to)
-            legal = piece.is_legal(board, piece.get_position(), to)
+            valid = piece.is_valid_move(board, piece.pos(), to)
+            legal = piece.is_legal(board, piece.pos(), to)
             if valid and legal:
                 return True
         return False
@@ -187,20 +185,20 @@ class Piece():
         # Find the diagonal / line from checking piece to king
         # Done via 
         if board[to].get_name() not in ['N', 'K']:
-            x_diff = self.x_diff(to, self.enemy_king(board).get_position())
-            y_diff = self.y_diff(to, self.enemy_king(board).get_position())
-            i, j = self.unit_vector(to, self.enemy_king(board).get_position())['i'], self.unit_vector(to, self.enemy_king(board).get_position())['j']
+            x_diff = self.x_diff(to, self.enemy_king(board).pos())
+            y_diff = self.y_diff(to, self.enemy_king(board).pos())
+            i, j = self.unit_vector(to, self.enemy_king(board).pos())['i'], self.unit_vector(to, self.enemy_king(board).pos())['j']
             if abs(x_diff) > 1 or abs(y_diff) > 1:
                 block_coord = to
                 for n in range(max([abs(x_diff) - 1, abs(y_diff) - 1])):
                     block_coord = self.apply_unit_vector(board, block_coord, i, j)
                     for piece in self.enemy_pieces(board):
-                        if piece.is_valid_move(board, piece.get_position(), block_coord) and piece.is_legal(board, piece.get_position(), block_coord):
+                        if piece.is_valid_move(board, piece.pos(), block_coord) and piece.is_legal(board, piece.pos(), block_coord):
                             return True
         return False
         #check all enemy pieces to see if they can move to the line of sight
     def mate(self, board, to):
-        if board[to].is_valid_move(board, to, self.enemy_king(board).get_position()):
+        if board[to].is_valid_move(board, to, self.enemy_king(board).pos()):
             print(self.escape(board), self.capture(board, to), self.block(board, to))
             return not (self.escape(board) or self.capture(board, to) or self.block(board, to))
         return False
@@ -209,17 +207,17 @@ class Piece():
         temp = board[to]
         board[to] = board[start]
         board[start] = '__'
-        board[to].update_position(to)
+        board[to].update_pos(to)
         valid = True
 
         for piece in self.enemy_pieces(board):
-            # print(piece, self.ally_king(board).get_position(), board[start], board[to])
-            if piece.is_valid_move(board, piece.get_position(), self.ally_king(board).get_position()):
+            # print(piece, self.ally_king(board).pos(), board[start], board[to])
+            if piece.is_valid_move(board, piece.pos(), self.ally_king(board).pos()):
                 valid = False
 
         board[start] = board[to]
         board[to] = temp
-        board[start].update_position(start)
+        board[start].update_pos(start)
         return valid
 
             
@@ -268,7 +266,7 @@ class King(Piece):
     def is_valid_move(self, board, start, to):
         if self.replaceable(board, to): 
             if self.can_castle(board, to):
-                self.apply_unit_vector(board, self.get_position(), self.x_diff(self.get_position(), to), 0)
+                self.apply_unit_vector(board, self.pos(), self.x_diff(self.pos(), to), 0)
                 self.moves += 1
                 return True
             return abs(self.x_diff(start, to)) < 2 and abs(self.y_diff(start, to)) < 2
@@ -276,20 +274,52 @@ class King(Piece):
     
     def can_castle(self, board, to):
         if self.moves == 0:
-            i = self.unit_vector(self.get_position(), to)['i']
+            i = self.unit_vector(self.pos(), to)['i']
             if i < 0:
-                rook_coord = 'a' + self.get_position()[1]
+                rook_coord = 'a' + self.pos()[1]
+                intermediate_coord = 'b' + self.pos()[1]
             elif i > 0:
-                rook_coord = 'a' + self.get_position()[1]
+                rook_coord = 'h' + self.pos()[1]
+                intermediate_coord = 'g' + self.pos()[1]
+            elif i == 0:
+                return False
             if board[rook_coord] != '__':
-                if board[rook_coord].__str__() == self.get_color() + 'R':
+                if board[rook_coord].__str__() == self.get_col() + 'R':
                     if board[rook_coord].moves == 0:
-                        if self.x_diff(self.get_position(), to) == 2 and self.x_diff(self.get_position(), to) == 0:
-                            pass
+                        if abs(self.x_diff(self.pos(), to)) == 2 and self.y_diff(self.pos(), to) == 0:
+                            if board[rook_coord].is_valid_move(board, rook_coord, intermediate_coord):
+                                temp_coord = self.apply_unit_vector(board, self.pos(), i, 0)
+                                bandaid = False
+                                for n in range(2):
+                                    valid = self.is_valid_move(board, self.pos(), temp_coord)
+                                    legal = self.is_legal(board, self.pos(), temp_coord)
+                                    if valid and legal:
+
+                                        board[temp_coord] = board[self.pos()]
+                                        board[self.pos()] = '__'
+                                        self.update_pos(temp_coord)
+                                        temp_coord = self.apply_unit_vector(board, temp_coord, i, 0)
+                                        bandaid = True
+                                    else:
+                                        bandaid = False
+                                        board['e' + self.pos()[1]] = board[self.pos()]
+                                        board[self.pos()] == '__'
+                                        self.update_pos('e' + self.pos()[1])
+                                if bandaid:
+                                    castled_rook_coord = self.apply_unit_vector(board, self.pos(), -i, 0)
+                                    board[rook_coord].moves += 1
+                                    board[castled_rook_coord] = board[rook_coord]
+                                    board[castled_rook_coord].update_pos(castled_rook_coord)
+                                    board[rook_coord] = '__'
+                                    
+                                return bandaid
+                                        
+                                
                             # TODO 
                             # Check if the back row is empty
                             # Check if it is legal
                             # and that it does not "go through checks"
+                            # dont have to check for legal moves for the rook
         return False
 
 class Pawn(Piece):
@@ -306,9 +336,9 @@ class Pawn(Piece):
 
         # Checks if white is moving up the board or if black is moving down the board
         correct_direction = False
-        if self.get_color() == 'w' and j > 0:
+        if self.get_col() == 'w' and j > 0:
             correct_direction = True
-        if self.get_color() == 'b' and j < 0:
+        if self.get_col() == 'b' and j < 0:
             correct_direction = True
 
         # Only if the move is valid, is the self.move counter updated
@@ -327,7 +357,7 @@ class Pawn(Piece):
                     adj_index = letters.index(start[0]) + self.x_diff(start, to)
                     adj_coord = letters[adj_index] + start[1]
                     adj = board[adj_coord]
-                    if adj.get_name() == "P" and adj.get_color != self.color:
+                    if adj.get_name() == "P" and adj.get_col() != self.get_col():
                         valid = Piece.get_counter() - self.last_move == 1
                         # I dont like that im removing a piece in this class
                         # wait how am i able to change this board here?
