@@ -1,4 +1,3 @@
-from glob import escape
 import string
 letters = string.ascii_lowercase
 class Piece():

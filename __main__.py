@@ -4,10 +4,7 @@ class Chess():
     """
     Put description of the Chess class here
     """
-
     def __init__(self, dev_mode = False):
-        # replace `pass` with the desired attributes and add any 
-        # additional parameters to the function  
         self.board = Board()
         self.board.print_board()
         self.move_counter = 1
