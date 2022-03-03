@@ -1,3 +1,4 @@
+from glob import escape
 import string
 letters = string.ascii_lowercase
 class Piece():
@@ -53,6 +54,7 @@ class Piece():
             return True
         return False
 
+    #Could change to static methods
     def x_diff(self, start, to):
         """
         Returns the difference between start and end x coordinates
@@ -121,7 +123,7 @@ class Piece():
         in a diagonal
         """
         if self.replaceable(board, to):
-            if self.x_diff(start, to) == self.y_diff(start, to):
+            if abs(self.x_diff(start, to)) == abs(self.y_diff(start, to)):
                 i, j = self.unit_vector(start, to)['i'], self.unit_vector(start, to)['j']
                 x1, y1 = letters.index(start[0]) + i, int(start[1]) + j
                 x2, y2 = letters.index(to[0]), int(to[1])
@@ -133,21 +135,86 @@ class Piece():
                     x1 += i
                     y1 += j
         return False
-    
+    def apply_unit_vector(self, board, start, i, j):
+        """
+        Returns coordinates of the i and j vectors applied to start coordinate
+        as a string
+        Returns -1 if the resultant coordinate is invalid
+        TODO apply this method to other methods
+        """
+        x = letters.index(start[0]) + i
+        y = int(start[1]) + j
+        coord = letters[x] + str(y)
+        if coord in board:
+            return coord
+        return -1
+    def all_pieces(self, board):
+        return [value for value in board.values() if value != '__']
+    def enemy_pieces(self, board):
+        return [value for value in self.all_pieces(board) if value.get_color() != self.get_color()]
+    def ally_pieces(self, board):
+        return [value for value in self.all_pieces(board) if value.get_color() == self.get_color()]
+    def ally_king(self, board):
+        return [value for value in self.ally_pieces(board) if value.get_name() == 'K'][0]
+    def enemy_king(self, board):
+        return [value for value in self.enemy_pieces(board) if value.get_name() == 'K'][0]
+    def escape(self, board):
+        vector =[
+                    [-1, 1], [0, 1], [1, 1],
+                    [-1, 0],         [1, 0],
+                    [-1,-1], [0,-1], [1,-1]
+                ]
+
+        for v in vector:
+            escape_coord = self.apply_unit_vector(board, self.enemy_king(board).get_position(), v[0], v[1])
+            if  escape_coord != -1:
+                valid = self.enemy_king(board).is_valid_move(board, self.enemy_king(board).get_position(), escape_coord)
+                legal = self.enemy_king(board).is_legal(board, self.enemy_king(board).get_position(), escape_coord)
+                if valid and legal :
+                    return True
+        return False
+        
+    def capture(self, board, to):
+        for piece in self.enemy_pieces(board):
+            valid = piece.is_valid_move(board, piece.get_position(), to)
+            legal = piece.is_legal(board, piece.get_position(), to)
+            if valid and legal:
+                return True
+        return False
+    def block(self, board, to):
+        # Find the diagonal / line from checking piece to king
+        # Done via 
+        if board[to].get_name() not in ['N', 'K']:
+            x_diff = self.x_diff(to, self.enemy_king(board).get_position())
+            y_diff = self.y_diff(to, self.enemy_king(board).get_position())
+            i, j = self.unit_vector(to, self.enemy_king(board).get_position())['i'], self.unit_vector(to, self.enemy_king(board).get_position())['j']
+            if abs(x_diff) > 1 or abs(y_diff) > 1:
+                block_coord = to
+                for n in range(max([abs(x_diff) - 1, abs(y_diff) - 1])):
+                    block_coord = self.apply_unit_vector(board, block_coord, i, j)
+                    for piece in self.enemy_pieces(board):
+                        if piece.is_valid_move(board, piece.get_position(), block_coord) and piece.is_legal(board, piece.get_position(), block_coord):
+                            return True
+        return False
+        #check all enemy pieces to see if they can move to the line of sight
+    def mate(self, board, to):
+        if board[to].is_valid_move(board, to, self.enemy_king(board).get_position()):
+            print(self.escape(board), self.capture(board, to), self.block(board, to))
+            return not (self.escape(board) or self.capture(board, to) or self.block(board, to))
+        return False
     def is_legal(self, board, start, to): 
         # Or just copy.deepcopy(board)  
         temp = board[to]
         board[to] = board[start]
         board[start] = '__'
         board[to].update_position(to)
-        all_pieces = [value for value in board.values() if value != '__']
-        enemy_pieces = [value for value in all_pieces if value.get_color() != self.get_color()]
-        ally_king = [value for value in all_pieces if value.__str__() == self.get_color() + 'K'][0]
         valid = True
-        for piece in enemy_pieces:
-            print(piece, ally_king.get_position(), board[start], board[to])
-            if piece.is_valid_move(board, piece.get_position(), ally_king.get_position()):
+
+        for piece in self.enemy_pieces(board):
+            # print(piece, self.ally_king(board).get_position(), board[start], board[to])
+            if piece.is_valid_move(board, piece.get_position(), self.ally_king(board).get_position()):
                 valid = False
+
         board[start] = board[to]
         board[to] = temp
         board[start].update_position(start)
@@ -198,7 +265,7 @@ class King(Piece):
 
     def is_valid_move(self, board, start, to):
         if self.replaceable(board, to): 
-            return abs(self.x_diff(start, to) * self.y_diff(start, to)) <= 1
+            return abs(self.x_diff(start, to)) < 2 and abs(self.y_diff(start, to)) < 2
         return False
     
     def can_castle(self):
