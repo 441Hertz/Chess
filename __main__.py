@@ -35,15 +35,31 @@ class Chess():
         return True
     def is_piece(self, start):
         return self.board.board[start] != '__'
-    def valid_coordinate(self, start):
-        # Breaks if y coordinate is a string + probably more
-        # Also only checks for the start coordinate - not the to coord
-        valid_x = start[0] in 'abcdefgh'
-        valid_y = int(start[1]) < 9
-        return valid_x and valid_y
+    def valid_pos(self, pos):
+        # Breaks if y pos is a string + probably more
+        # Also only checks for the start pos - not the to pos
+        if len(pos) == 2:
+            valid_x = pos[0] in 'abcdefgh'
+            valid_y = pos[1] in '12345678'
+            return valid_x and valid_y
+        return False
     def update_counter(self):
         self.move_counter += 1
         Piece.update_counter(self.move_counter)
+    def castle(self, board, start, to):
+        rook_pos = board[start].rook_pos(board, start, to)
+        castled_rook_pos = board[start].next_rook_pos(board, start, to)
+        self.replace(board, start, to)
+        self.replace(board, rook_pos, castled_rook_pos)
+    def replace(self, board, start, to):
+        # Moves piece from start to to 
+        # Places empty space at start location
+        # Updates position attribute
+        board[to] = board[start]
+        board[start] = '__'
+        board[to].update_pos(to)
+    def error_msg(self):
+        pass
     def move(self, start, to):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         """ 
@@ -51,19 +67,21 @@ class Chess():
         """
         board = self.board.board
         print("---------------------------------------------------------------")
-        if self.valid_coordinate(start) and self.is_piece(start):
+        if self.valid_pos(start) and \
+            self.valid_pos(to) and \
+            self.is_piece(start):
             if self.correct_turn(start):
                 valid = board[start].is_valid_move(board, start, to)  
                 if valid: 
-                    print(board[start])
                     legal = board[start].is_legal(board, start, to)
                     if legal:
                         print(board[start].__str__() + f' moved from {start} to {to}')
-                        # This could be a method
-                        board[to] = board[start]
-                        board[start] = '__'
-                        board[to].update_pos(to)
-                        self.promotion(board, to)
+                        if board[start].get_name() == 'K':
+                            if board[start].x_diff(start, to):
+                                self.castle(board, start, to)
+                        else:
+                            self.replace(board, start, to)
+                            self.promotion(board, to)
                         self.update_counter()
                         if board[to].mate(board, to):
                             print('Checkmate!')
@@ -74,50 +92,52 @@ class Chess():
             else:
                 print(f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!")
         else:
-            print(f"Invalid Move: {start} to {to} \nInvalid coordinates or empty space")
+            print(f"Invalid Move: {start} to {to} \nInvalid position or empty space")
         self.board.print_board()
         print("---------------------------------------------------------------")
 def translate(position):
     return position
 
 if __name__ == "__main__":
-    dev_mode = True
+    dev_mode = False
     chess = Chess(dev_mode)
-    chess.board.custom_board({
-'a8':'bK', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'__', 'f8':'__', 'g8':'__', 'h8':'__',
-'a7':'__', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
-'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
-'a5':'__', 'b5':'__', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
-'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
-'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
-'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'__', 'g2':'__', 'h2':'__',
-'a1':'wR', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'wR',
-})
-    chess.move('e1', 'g1')
+#     chess.board.custom_board({
+# 'a8':'br', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'bK', 'f8':'bR', 'g8':'__', 'h8':'bR',
+# 'a7':'__', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
+# 'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
+# 'a5':'__', 'b5':'__', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
+# 'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
+# 'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
+# 'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'wP', 'g2':'__', 'h2':'__',
+# 'a1':'wR', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'wR',
+# })
 
-    # while True:
-    #     start = input("From: ")
-    #     to = input("To: ")
+    # chess.move('e1', 'g1')
+    # chess.move('e8', 'c8')
+
+    while True:
+        start = input("From: ")
+        to = input("To: ")
         
-    #     start = translate(start)
-    #     to = translate(to)
+        start = translate(start)
+        to = translate(to)
 
-    #     if start == None or to == None:
-    #         continue
+        if start == None or to == None:
+            continue
 
-    #     chess.move(start, to)
+        chess.move(start, to)
 
-    #     # check for promotion pawns
-    #     i = 0
-    #     while i < 8:
-    #         if not chess.turn and chess.board.board[0][i] != None and \
-    #             chess.board.board[0][i].name == 'P':
-    #             chess.promotion((0, i))
-    #             break
-    #         elif chess.turn and chess.board.board[7][i] != None and \
-    #             chess.board.board[7][i].name == 'P':
-    #             chess.promotion((7, i))
-    #             break
-    #         i += 1
+        # check for promotion pawns
+        # i = 0
+        # while i < 8:
+        #     if not chess.turn and chess.board.board[0][i] != None and \
+        #         chess.board.board[0][i].name == 'P':
+        #         chess.promotion((0, i))
+        #         break
+        #     elif chess.turn and chess.board.board[7][i] != None and \
+        #         chess.board.board[7][i].name == 'P':
+        #         chess.promotion((7, i))
+        #         break
+        #     i += 1
 
-    #     chess.board.print_board()
+        chess.board.print_board()

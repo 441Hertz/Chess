@@ -45,8 +45,6 @@ class Piece():
         different color or empty space
         i.e. NOT the same color
         """
-        
-       
         if board[to] == '__':
             return True
         elif self.get_col() != board[to].get_col():
@@ -57,8 +55,8 @@ class Piece():
     # Also call it dx?
     def x_diff(self, start, to):
         """
-        Returns the difference between start and end x coordinates
-        given two coordinate pairs
+        Returns the difference between start and end x positions
+        given two position pairs
         Can be negative
         """
         x1 = letters.index(start[0])
@@ -67,8 +65,8 @@ class Piece():
 
     def y_diff(self, start, to):
         """
-        Returns the difference between start and end y coordinates
-        given two coordinate pairs
+        Returns the difference between start and end y positions
+        given two position pairs
         Can be negative
         """
         y1 = int(start[1])
@@ -78,7 +76,7 @@ class Piece():
     def unit_vector(self, start, to):
         """
         Returns the i and j unit vectors given 
-        initial and final coordinates
+        initial and final positions
         as a dictionary
         """
         # Divide by zero protection
@@ -137,16 +135,16 @@ class Piece():
         return False
     def apply_unit_vector(self, board, start, i, j):
         """
-        Returns coordinates of the i and j vectors applied to start coordinate
+        Returns positions of the i and j vectors applied to start position
         as a string
-        Returns -1 if the resultant coordinate is invalid
+        Returns -1 if the resultant position is invalid
         TODO apply this method to other methods
         """
         x = letters.index(start[0]) + i
         y = int(start[1]) + j
-        coord = letters[x] + str(y)
-        if coord in board:
-            return coord
+        pos = letters[x] + str(y)
+        if pos in board:
+            return pos
         return -1
     def all_pieces(self, board):
         return [value for value in board.values() if value != '__']
@@ -158,6 +156,7 @@ class Piece():
         return [value for value in self.ally_pieces(board) if value.get_name() == 'K'][0]
     def enemy_king(self, board):
         return [value for value in self.enemy_pieces(board) if value.get_name() == 'K'][0]
+
     def escape(self, board):
         vector =[
                     [-1, 1], [0, 1], [1, 1],
@@ -166,10 +165,10 @@ class Piece():
                 ]
 
         for v in vector:
-            escape_coord = self.apply_unit_vector(board, self.enemy_king(board).pos(), v[0], v[1])
-            if  escape_coord != -1:
-                valid = self.enemy_king(board).is_valid_move(board, self.enemy_king(board).pos(), escape_coord)
-                legal = self.enemy_king(board).is_legal(board, self.enemy_king(board).pos(), escape_coord)
+            escape_pos = self.apply_unit_vector(board, self.enemy_king(board).pos(), v[0], v[1])
+            if  escape_pos != -1:
+                valid = self.enemy_king(board).is_valid_move(board, self.enemy_king(board).pos(), escape_pos)
+                legal = self.enemy_king(board).is_legal(board, self.enemy_king(board).pos(), escape_pos)
                 if valid and legal :
                     return True
         return False
@@ -189,11 +188,11 @@ class Piece():
             y_diff = self.y_diff(to, self.enemy_king(board).pos())
             i, j = self.unit_vector(to, self.enemy_king(board).pos())['i'], self.unit_vector(to, self.enemy_king(board).pos())['j']
             if abs(x_diff) > 1 or abs(y_diff) > 1:
-                block_coord = to
+                block_pos = to
                 for n in range(max([abs(x_diff) - 1, abs(y_diff) - 1])):
-                    block_coord = self.apply_unit_vector(board, block_coord, i, j)
+                    block_pos = self.apply_unit_vector(board, block_pos, i, j)
                     for piece in self.enemy_pieces(board):
-                        if piece.is_valid_move(board, piece.pos(), block_coord) and piece.is_legal(board, piece.pos(), block_coord):
+                        if piece.is_valid_move(board, piece.pos(), block_pos) and piece.is_legal(board, piece.pos(), block_pos):
                             return True
         return False
         #check all enemy pieces to see if they can move to the line of sight
@@ -202,24 +201,25 @@ class Piece():
             print(self.escape(board), self.capture(board, to), self.block(board, to))
             return not (self.escape(board) or self.capture(board, to) or self.block(board, to))
         return False
+    def in_check(self, board):
+        """ Checks if ally king is in check """
+        for piece in self.enemy_pieces(board):
+            if piece.is_valid_move(board, piece.pos(), self.ally_king(board).pos()):
+                return True
+        return False
     def is_legal(self, board, start, to): 
         # Or just copy.deepcopy(board)  
         temp = board[to]
         board[to] = board[start]
         board[start] = '__'
         board[to].update_pos(to)
-        valid = True
-
-        for piece in self.enemy_pieces(board):
-            # print(piece, self.ally_king(board).pos(), board[start], board[to])
-            if piece.is_valid_move(board, piece.pos(), self.ally_king(board).pos()):
-                valid = False
-
+        valid = self.in_check(board)
+        
         board[start] = board[to]
         board[to] = temp
         board[start].update_pos(start)
-        return valid
-
+        return not valid
+    
             
 
 class Rook(Piece):
@@ -265,61 +265,64 @@ class King(Piece):
 
     def is_valid_move(self, board, start, to):
         if self.replaceable(board, to): 
-            if self.can_castle(board, to):
-                self.apply_unit_vector(board, self.pos(), self.x_diff(self.pos(), to), 0)
-                self.moves += 1
-                return True
+            if abs(self.x_diff(start, to)) == 2 and self.y_diff(start, to) == 0:
+                if board[start].in_check(board) == False:
+                    if self.can_castle(board, to):
+                        self.moves += 1
+                        return True
             return abs(self.x_diff(start, to)) < 2 and abs(self.y_diff(start, to)) < 2
         return False
     
-    def can_castle(self, board, to):
+    def can_castle(self, board, start, to):
         if self.moves == 0:
-            i = self.unit_vector(self.pos(), to)['i']
-            if i < 0:
-                rook_coord = 'a' + self.pos()[1]
-                intermediate_coord = 'b' + self.pos()[1]
-            elif i > 0:
-                rook_coord = 'h' + self.pos()[1]
-                intermediate_coord = 'g' + self.pos()[1]
-            elif i == 0:
-                return False
-            if board[rook_coord] != '__':
-                if board[rook_coord].__str__() == self.get_col() + 'R':
-                    if board[rook_coord].moves == 0:
-                        if abs(self.x_diff(self.pos(), to)) == 2 and self.y_diff(self.pos(), to) == 0:
-                            if board[rook_coord].is_valid_move(board, rook_coord, intermediate_coord):
-                                temp_coord = self.apply_unit_vector(board, self.pos(), i, 0)
-                                bandaid = False
-                                for n in range(2):
-                                    valid = self.is_valid_move(board, self.pos(), temp_coord)
-                                    legal = self.is_legal(board, self.pos(), temp_coord)
-                                    if valid and legal:
+            i = self.unit_vector(start, to)
+            rook_pos = self.rook_pos(board, start, to)
+            next_pos = self.next_rook_pos(board, start, to)
+            if self.is_valid_rook(board, rook_pos):
+                if board[rook_pos].is_valid_move(board, rook_pos, next_pos):
+                    temp_pos = self.apply_unit_vector(board, self.pos(), i, 0)
+                    bandaid = False
+                    for n in range(2):
+                        valid = self.is_valid_move(board, self.pos(), temp_pos)
+                        legal = self.is_legal(board, self.pos(), temp_pos)
+                        if valid and legal:
+                            board[temp_pos] = board[self.pos()]
+                            board[self.pos()] = '__'
+                            self.update_pos(temp_pos)
+                            temp_pos = self.apply_unit_vector(board, temp_pos, i, 0)
+                            bandaid = True
+                        else:
+                            bandaid = False
+                    board['e' + self.pos()[1]] = board[self.pos()]
+                    board[self.pos()] == '__'
+                    self.update_pos('e' + self.pos()[1])
+                    return bandaid
+        return False
+    def rook_pos(self, board, start, to):
+        # Returns position of the rook used for castling in the target direction
+        i = board[start].unit_vector(start, to)['i'] 
+        if i < 0:
+            pos = 'a' + start[1]
+        elif i > 0:
+            pos = 'h' + start[1]
+        return pos
 
-                                        board[temp_coord] = board[self.pos()]
-                                        board[self.pos()] = '__'
-                                        self.update_pos(temp_coord)
-                                        temp_coord = self.apply_unit_vector(board, temp_coord, i, 0)
-                                        bandaid = True
-                                    else:
-                                        bandaid = False
-                                        board['e' + self.pos()[1]] = board[self.pos()]
-                                        board[self.pos()] == '__'
-                                        self.update_pos('e' + self.pos()[1])
-                                if bandaid:
-                                    castled_rook_coord = self.apply_unit_vector(board, self.pos(), -i, 0)
-                                    board[rook_coord].moves += 1
-                                    board[castled_rook_coord] = board[rook_coord]
-                                    board[castled_rook_coord].update_pos(castled_rook_coord)
-                                    board[rook_coord] = '__'
-                                    
-                                return bandaid
-                                        
-                                
-                            # TODO 
-                            # Check if the back row is empty
-                            # Check if it is legal
-                            # and that it does not "go through checks"
-                            # dont have to check for legal moves for the rook
+    def next_rook_pos(self, board, start, to):
+        # Returns position of the rook used for castling in the target direction BUT SHIFTED ONE UNIT AWAY
+        i = board[start].unit_vector(start, to)['i'] 
+        if i < 0:
+            pos = 'b' + self.pos()[1]
+        elif i > 0:
+            pos = 'g' + self.pos()[1]
+        return pos
+
+    def is_valid_rook(self, board, pos):
+        if board[pos] != '__':
+            # Can probably assume that the rook is an ally rook
+            # Since is_legal is checked
+            # But failsafe
+            if board[pos].__str__() == self.get_col() + 'R':
+                return board[pos].moves == 0
         return False
 
 class Pawn(Piece):
@@ -355,14 +358,14 @@ class Pawn(Piece):
                 # LOL ITS SO BAD
                 else:
                     adj_index = letters.index(start[0]) + self.x_diff(start, to)
-                    adj_coord = letters[adj_index] + start[1]
-                    adj = board[adj_coord]
+                    adj_pos = letters[adj_index] + start[1]
+                    adj = board[adj_pos]
                     if adj.get_name() == "P" and adj.get_col() != self.get_col():
                         valid = Piece.get_counter() - self.last_move == 1
                         # I dont like that im removing a piece in this class
                         # wait how am i able to change this board here?
                         if valid == True:
-                            board[adj_coord] = '__'
+                            board[adj_pos] = '__'
             # Checks if move is forward or backward
             elif abs(self.x_diff(start, to)) == 0:
                 # Checks if the target location is empty for 1 unit moves
