@@ -267,7 +267,7 @@ class King(Piece):
         if self.replaceable(board, to): 
             if abs(self.x_diff(start, to)) == 2 and self.y_diff(start, to) == 0:
                 if board[start].in_check(board) == False:
-                    if self.can_castle(board, to):
+                    if self.can_castle(board, start, to):
                         self.moves += 1
                         return True
             return abs(self.x_diff(start, to)) < 2 and abs(self.y_diff(start, to)) < 2
@@ -275,7 +275,7 @@ class King(Piece):
     
     def can_castle(self, board, start, to):
         if self.moves == 0:
-            i = self.unit_vector(start, to)
+            i = self.unit_vector(start, to)['i']
             rook_pos = self.rook_pos(board, start, to)
             next_pos = self.next_rook_pos(board, start, to)
             if self.is_valid_rook(board, rook_pos):
@@ -314,6 +314,15 @@ class King(Piece):
             pos = 'b' + self.pos()[1]
         elif i > 0:
             pos = 'g' + self.pos()[1]
+        return pos
+
+    def castled_rook_pos(self, board, start, to):
+        # Returns position of the rook after castling
+        i = board[start].unit_vector(start, to)['i'] 
+        if i > 0:
+            pos = 'f' + self.pos()[1]
+        elif i < 0:
+            pos = 'd' + self.pos()[1]
         return pos
 
     def is_valid_rook(self, board, pos):

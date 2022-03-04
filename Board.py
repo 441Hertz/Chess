@@ -102,6 +102,7 @@ class Board():
             else:
                 print(f"'{key}':'{value.__str__()}',")
                 i+=1
+        
 
 # TO DO
 # Have generate preset save to a file

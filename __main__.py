@@ -9,6 +9,7 @@ class Chess():
         self.board.print_board()
         self.move_counter = 1
         self.dev_mode = dev_mode
+        self.move_log = {}
     def promotion(self, board, to):
         if board[to].get_name() == 'P' and (int(to[1]) == 8 or int(to[1]) == 1):
             promote = input('Promote pawn to: ').lower()[0]
@@ -48,7 +49,7 @@ class Chess():
         Piece.update_counter(self.move_counter)
     def castle(self, board, start, to):
         rook_pos = board[start].rook_pos(board, start, to)
-        castled_rook_pos = board[start].next_rook_pos(board, start, to)
+        castled_rook_pos = board[start].castled_rook_pos(board, start, to)
         self.replace(board, start, to)
         self.replace(board, rook_pos, castled_rook_pos)
     def replace(self, board, start, to):
@@ -60,6 +61,14 @@ class Chess():
         board[to].update_pos(to)
     def error_msg(self):
         pass
+    def update_log(self, start, to):
+        # OR add in a tuple
+        move = self.which_move()
+        log = self.move_log
+        if move in log.keys():
+            log[move].append((start, to))
+        else:
+            log[move] = [(start, to)]
     def move(self, start, to):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         """ 
@@ -76,15 +85,16 @@ class Chess():
                     legal = board[start].is_legal(board, start, to)
                     if legal:
                         print(board[start].__str__() + f' moved from {start} to {to}')
-                        if board[start].get_name() == 'K':
-                            if board[start].x_diff(start, to):
-                                self.castle(board, start, to)
+                        if board[start].get_name() == 'K' and board[start].x_diff(start, to):
+                            self.castle(board, start, to)
                         else:
                             self.replace(board, start, to)
                             self.promotion(board, to)
+                        self.update_log(start, to)
                         self.update_counter()
-                        if board[to].mate(board, to):
-                            print('Checkmate!')
+                        print(board[to], to)
+                        # if board[to].mate(board, to):
+                        #     print('Checkmate!')
                     else:
                         print(f"Invalid Move: {start} to {to} \nMove is not legal!")
                 else:
@@ -94,7 +104,9 @@ class Chess():
         else:
             print(f"Invalid Move: {start} to {to} \nInvalid position or empty space")
         self.board.print_board()
+        print(self.move_log)
         print("---------------------------------------------------------------")
+        
 def translate(position):
     return position
 
@@ -117,6 +129,8 @@ if __name__ == "__main__":
 
     while True:
         start = input("From: ")
+        if start == 'exit':
+            break
         to = input("To: ")
         
         start = translate(start)
@@ -124,8 +138,14 @@ if __name__ == "__main__":
 
         if start == None or to == None:
             continue
+        
 
         chess.move(start, to)
+        if chess.board.board[to].mate(chess.board.board, to):
+            print('Checkmate!')
+            break
+    print(chess.move_log)
+    chess.board.generate_preset()
 
         # check for promotion pawns
         # i = 0
@@ -139,5 +159,5 @@ if __name__ == "__main__":
         #         chess.promotion((7, i))
         #         break
         #     i += 1
-
-        chess.board.print_board()
+    # chess.board.print_board()
+        
