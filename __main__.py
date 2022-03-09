@@ -11,7 +11,8 @@ class Chess():
         self.dev_mode = dev_mode
         self.move_log = []
     def promotion(self, board, to):
-        if board[to].get_name() == 'P' and (int(to[1]) == 8 or int(to[1]) == 1):
+        y_pos = int(to[1])
+        if board[to].get_name() == 'P' and (y_pos == 8 or y_pos == 1):
             promote = input('Promote pawn to: ').lower()[0]
             while promote not in ['q', 'r', 'b', 'n']:
                 print('Invalid piece!')
@@ -48,10 +49,12 @@ class Chess():
         self.move_counter += 1
         Piece.update_counter(self.move_counter)
     def castle(self, board, start, to):
-        rook_pos = board[start].rook_pos(board, start, to)
-        castled_rook_pos = board[start].castled_rook_pos(board, start, to)
-        self.replace(board, start, to)
-        self.replace(board, rook_pos, castled_rook_pos)
+        piece = board[start]
+        if piece.get_name() == 'K' and piece.x_diff(start, to):
+            rook_pos = board[start].rook_pos(board, start, to)
+            castled_rook_pos = board[start].castled_rook_pos(board, start, to)
+            self.replace(board, start, to)
+            self.replace(board, rook_pos, castled_rook_pos)
     def replace(self, board, start, to):
         # Moves piece from start to to 
         # Places empty space at start location
@@ -75,38 +78,64 @@ class Chess():
 
     def move(self, start, to):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
+        # MAYBE ADD IN THE BOARD START TO VARIABLES AS CLASS ATTRIBUTES AND UPDATE THEM HERE WHEN ITS VALID? 
+        # THAT WAY WE DONT HAVE TO CONSTANTLY PASS IN VARIABLES FOR METHODS
         """ 
         What an absolute mess
         """
         board = self.board.board
         print("---------------------------------------------------------------")
-        if self.valid_pos(start) and \
-            self.valid_pos(to) and \
-            self.is_piece(start):
-            if self.correct_turn(start):
-                valid = board[start].is_valid_move(board, start, to)  
-                if valid: 
-                    legal = board[start].is_legal(board, start, to)
-                    if legal:
-                        print(board[start].__str__() + f' moved from {start} to {to}')
-                        if board[start].get_name() == 'K' and board[start].x_diff(start, to):
-                            self.castle(board, start, to)
-                        else:
-                            self.replace(board, start, to)
-                            self.promotion(board, to)
-                        self.update_log(start, to)
-                        self.update_counter()
-                        print(board[to], to)
-                        # if board[to].mate(board, to):
-                        #     print('Checkmate!')
-                    else:
-                        print(f"Invalid Move: {start} to {to} \nMove is not legal!")
+        if self.valid_input(start, to):
+            if self.valid_move(board, start, to):
+                piece = board[start]
+
+                if piece.get_name() == 'K' and piece.x_diff(start, to):
+                    self.castle(board, start, to)
                 else:
-                    print(f"Invalid Move: {start} to {to} \nRead the rules!")
-            else:
-                print(f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!")
-        else:
-            print(f"Invalid Move: {start} to {to} \nInvalid position or empty space")
+                    self.replace(board, start, to)
+                    self.promotion(board, to)
+            
+                self.update_log(start, to)
+                self.update_counter()
+
+                self.end_output(piece.__str__() + f' moved from {start} to {to}')
+
+                if chess.board.board[to].mate(chess.board.board, to):
+                    print('Checkmate!')
+                    return False
+        return True
+
+    def valid_input(self, start, to):
+        valid_pos = self.valid_pos(start) and \
+            self.valid_pos(to) 
+        if valid_pos:
+            valid_pos = self.is_piece(start)
+            valid_turn = self.correct_turn(start)
+
+        # We could have an error msg that contains all the errors with the move
+        # but could be redundant
+        # error = ''
+
+        if not valid_pos:
+            self.end_output(f"Invalid Move: {start} to {to} \nInvalid position or empty space")
+        elif not valid_turn:
+            self.end_output(f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!")
+            
+        return valid_pos and valid_turn
+
+    def valid_move(self, board, start, to):
+        valid = board[start].is_valid_move(board, start, to)  
+        legal = board[start].is_legal(board, start, to)
+
+        if not valid:
+            self.end_output(f"Invalid Move: {start} to {to} \nRead the rules!")
+        elif not legal:
+            self.end_output(f"Invalid Move: {start} to {to} \nMove is not legal!")
+
+        return valid and legal
+
+    def end_output(self, msg):
+        print(msg)
         self.board.print_board()
         print(self.move_log)
         print("---------------------------------------------------------------")
@@ -114,27 +143,30 @@ class Chess():
 def translate(position):
     return position
 
+def code_words(code):
+    pass
 if __name__ == "__main__":
     # TODO
     # PAWN ENPASSANTE FUNCTION IS BROKEN 
     # WHEN LOADING IN A DEFAULT BOARD
-    dev_mode = True
+    dev_mode = False
     chess = Chess(dev_mode)
-    chess.board.custom_board({
-'a8':'br', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'bK', 'f8':'bR', 'g8':'__', 'h8':'bR',
-'a7':'bP', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
-'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
-'a5':'__', 'b5':'wP', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
-'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
-'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
-'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'wP', 'g2':'__', 'h2':'__',
-'a1':'wR', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'wR',
-})
+#     chess.board.custom_board({
+# 'a8':'br', 'b8':'wQ', 'c8':'__', 'd8':'__', 'e8':'bK', 'f8':'bR', 'g8':'__', 'h8':'bR',
+# 'a7':'bP', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
+# 'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
+# 'a5':'__', 'b5':'wP', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
+# 'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
+# 'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
+# 'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'wP', 'g2':'__', 'h2':'__',
+# 'a1':'wR', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'wR',
+# })
 
     # chess.move('e1', 'g1')
     # chess.move('e8', 'c8')
 
-    while True:
+    running = True
+    while running:
         start = input("From: ")
         if start == 'exit':
             break
@@ -146,15 +178,12 @@ if __name__ == "__main__":
         if start == None or to == None:
             continue
         
-
-        chess.move(start, to)
+        running = chess.move(start, to)
         # TODO 
         # If move is invalid, the checkmate function checks the TO position 
         # To see if it can mate
         # But invalid so the move is not made - THEREFORE the TO position is empty and game crash
-        if chess.board.board[to].mate(chess.board.board, to):
-            print('Checkmate!')
-            break
+
     print(chess.move_log)
     chess.board.generate_preset()
     chess.board.save_logs(chess.move_log, filename = 'test')

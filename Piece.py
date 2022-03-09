@@ -368,7 +368,7 @@ class Pawn(Piece):
                     adj = board[adj_pos]
                     if adj.get_name() == "P" and adj.get_col() != self.get_col():
                         # If the Pawn moved in the last move, replace the pawn with an empty space
-                        valid = Piece.get_counter() - self.last_move == 1
+                        valid = Piece.get_counter() - adj.last_move == 1
                         if valid:
                             board[adj_pos] = '__'
             # Checks that the move does not move in the horizontal direction at all

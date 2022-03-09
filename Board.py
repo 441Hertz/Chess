@@ -57,14 +57,26 @@ class Board():
                 elif key[0] == 'e':
                     self.board[key] = King('b', key) 
     def print_board(self):
+        def letters():
+            print('-', end = ' ')
+            for letter in 'abcdefgh':
+                print(letter, end = '  ')
+            print('-')
+        letters()
         i = 1
         for key, value in self.board.items():
-            if (i)%8 != 0:
-                print(f'{key}:{value}', end=' ')
-                i+=1
+            if i%8 == 0:
+                print(f'{value}', end = ' ')
+                print(key[1])
+                i += 1
+            elif i%8 == 1:
+                print(key[1], end = ' ')
+                print(f'{value}', end = ' ')
+                i += 1
             else:
-                print(f'{key}:{value}')
-                i+=1
+                print(f'{value}', end = ' ')
+                i += 1
+        letters()
         
     def clear_board(self):
         for key in self.board.keys():
