@@ -133,7 +133,7 @@ class Piece():
                     x1 += i
                     y1 += j
         return False
-    def apply_unit_vector(self, board, start, i, j):
+    def apply_unit_vector(self, board, start, i = 0, j = 0):
         """
         Returns positions of the i and j vectors applied to start position
         as a string
@@ -165,7 +165,7 @@ class Piece():
                 ]
 
         for v in vector:
-            escape_pos = self.apply_unit_vector(board, self.enemy_king(board).pos(), v[0], v[1])
+            escape_pos = self.apply_unit_vector(board, self.enemy_king(board).pos(), i = v[0], j = v[1])
             if  escape_pos != -1:
                 valid = self.enemy_king(board).is_valid_move(board, self.enemy_king(board).pos(), escape_pos)
                 legal = self.enemy_king(board).is_legal(board, self.enemy_king(board).pos(), escape_pos)
@@ -190,7 +190,7 @@ class Piece():
             if abs(x_diff) > 1 or abs(y_diff) > 1:
                 block_pos = to
                 for n in range(max([abs(x_diff) - 1, abs(y_diff) - 1])):
-                    block_pos = self.apply_unit_vector(board, block_pos, i, j)
+                    block_pos = self.apply_unit_vector(board, block_pos, i = i, j = j)
                     for piece in self.enemy_pieces(board):
                         if piece.is_valid_move(board, piece.pos(), block_pos) and piece.is_legal(board, piece.pos(), block_pos):
                             return True
@@ -198,7 +198,6 @@ class Piece():
         #check all enemy pieces to see if they can move to the line of sight
     def mate(self, board, to):
         if board[to].is_valid_move(board, to, self.enemy_king(board).pos()):
-            print(self.escape(board), self.capture(board, to), self.block(board, to))
             return not (self.escape(board) or self.capture(board, to) or self.block(board, to))
         return False
     def in_check(self, board):
@@ -219,6 +218,11 @@ class Piece():
         board[to] = temp
         board[start].update_pos(start)
         return not valid
+
+    def is_empty(self, board, pos):
+        # Returns True if target location is empty
+        return board[pos] == '__'  
+
     
             
 
@@ -280,7 +284,7 @@ class King(Piece):
             next_pos = self.next_rook_pos(board, start, to)
             if self.is_valid_rook(board, rook_pos):
                 if board[rook_pos].is_valid_move(board, rook_pos, next_pos):
-                    temp_pos = self.apply_unit_vector(board, self.pos(), i, 0)
+                    temp_pos = self.apply_unit_vector(board, self.pos(), i)
                     bandaid = False
                     for n in range(2):
                         valid = self.is_valid_move(board, self.pos(), temp_pos)
@@ -289,7 +293,7 @@ class King(Piece):
                             board[temp_pos] = board[self.pos()]
                             board[self.pos()] = '__'
                             self.update_pos(temp_pos)
-                            temp_pos = self.apply_unit_vector(board, temp_pos, i, 0)
+                            temp_pos = self.apply_unit_vector(board, temp_pos, i)
                             bandaid = True
                         else:
                             bandaid = False
@@ -344,49 +348,55 @@ class Pawn(Piece):
         Returns True if the Pawn can occupy it
         Just read the comments - too many conditionals
         """
+        i = self.unit_vector(start, to)['i']
         j = self.unit_vector(start, to)['j']
-
-        # Checks if white is moving up the board or if black is moving down the board
-        correct_direction = False
-        if self.get_col() == 'w' and j > 0:
-            correct_direction = True
-        if self.get_col() == 'b' and j < 0:
-            correct_direction = True
 
         # Only if the move is valid, is the self.move counter updated
         valid = False
 
-        if self.replaceable(board, to) and correct_direction:
-            # Checks if target location is one diagonal away
-            if abs(self.x_diff(start, to) * self.y_diff(start, to)) == 1:
+        if self.replaceable(board, to) and \
+            self.correct_direction(start, to):
+            if self.is_diagonal(start, to):
                 # Checks if target location contains an enemy piece
-                if board[to] != '__':
+                if not self.is_empty(board, to):
                     valid = True
                 # EN PASSENTE
                 # If target location is empty, checks for an enemy pawn adjacent that just moved two units
                 # LOL ITS SO BAD
                 else:
-                    adj_index = letters.index(start[0]) + self.x_diff(start, to)
-                    adj_pos = letters[adj_index] + start[1]
+                    adj_pos = self.apply_unit_vector(board, start, i)
                     adj = board[adj_pos]
                     if adj.get_name() == "P" and adj.get_col() != self.get_col():
+                        # If the Pawn moved in the last move, replace the pawn with an empty space
                         valid = Piece.get_counter() - self.last_move == 1
-                        # I dont like that im removing a piece in this class
-                        # wait how am i able to change this board here?
-                        if valid == True:
+                        if valid:
                             board[adj_pos] = '__'
-            # Checks if move is forward or backward
+            # Checks that the move does not move in the horizontal direction at all
             elif abs(self.x_diff(start, to)) == 0:
                 # Checks if the target location is empty for 1 unit moves
                 if abs(self.y_diff(start, to)) == 1:
-                    valid = board[to] == '__'
+                    valid = self.is_empty(board, to)
                 # Checks if the target location is empty and path is unobstructed for 2 unit moves
                 elif abs(self.y_diff(start, to)) == 2:
                     # OR can just run line() to see if middle square is free
-                    middle = int(start[1]) + j
-                    if board[to[0] + str(middle)] == '__':
+                    middle = self.apply_unit_vector(board, start, j = j)
+                    if self.is_empty(board, middle):
                         valid = self.moves == 0
         if valid:
             self.moves += 1
             self.last_move = Piece.get_counter()
         return valid
+    
+    def correct_direction(self, start, to):
+        # Checks if white/black is moving up/down the board
+        j = self.unit_vector(start, to)['j']
+        if j > 0:
+            return self.get_col() == 'w'
+        if j < 0:
+            return self.get_col() == 'b' 
+        return False
+    def is_diagonal(self, start, to):
+        # Checks if target location is one diagonal away
+        return abs(self.x_diff(start, to) * self.y_diff(start, to)) == 1
+
+

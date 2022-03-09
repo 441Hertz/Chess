@@ -1,7 +1,10 @@
 from Piece import *
+import uuid
+import os.path
+from os import path
+import csv
 #import pprint
 #TO DO
-# instead of passing color and name to class, pass as one string
 class Board():
     """
     Put description of the Board class here
@@ -84,6 +87,7 @@ class Board():
             elif value[1] == 'K':
                 self.board[key] = King(value[0], key)
         print('Custom Board Loaded')
+        self.print_board()
 
     def generate_preset(self):
         i = 1
@@ -103,6 +107,18 @@ class Board():
                 print(f"'{key}':'{value.__str__()}',")
                 i+=1
         
+    def save_logs(self, log, filename = str(uuid.uuid4())):
+        version = 0
+        while path.exists('custom/' + filename + str(version) + '.csv'):
+            version += 1
+        filename = 'custom/' + filename + str(version) + '.csv'
+        with open(filename, 'w+') as csv_file:
+            fieldnames = ['move', 'white', 'black']
+            csv_writer = csv.writer(csv_file, delimiter = '\t')
+            csv_writer.writerow(fieldnames)
+            for row in log:
+                csv_writer.writerow(row)
+
 
 # TO DO
 # Have generate preset save to a file

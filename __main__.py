@@ -9,7 +9,7 @@ class Chess():
         self.board.print_board()
         self.move_counter = 1
         self.dev_mode = dev_mode
-        self.move_log = {}
+        self.move_log = []
     def promotion(self, board, to):
         if board[to].get_name() == 'P' and (int(to[1]) == 8 or int(to[1]) == 1):
             promote = input('Promote pawn to: ').lower()[0]
@@ -62,13 +62,17 @@ class Chess():
     def error_msg(self):
         pass
     def update_log(self, start, to):
-        # OR add in a tuple
+        # TODO
+        # ASSUMES THE FIRST MOVE IS MADE BY WHITE
+        # BUT IF A CUSTOM BOARD IS LOADED AND BLACK MOVES FIRST GG
         move = self.which_move()
         log = self.move_log
-        if move in log.keys():
-            log[move].append((start, to))
+
+        if self.whose_move()[0] == 'w':
+            log.append([move, start + to, ''])
         else:
-            log[move] = [(start, to)]
+            log[move - 1][2] = start + to
+
     def move(self, start, to):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         """ 
@@ -111,18 +115,21 @@ def translate(position):
     return position
 
 if __name__ == "__main__":
-    dev_mode = False
+    # TODO
+    # PAWN ENPASSANTE FUNCTION IS BROKEN 
+    # WHEN LOADING IN A DEFAULT BOARD
+    dev_mode = True
     chess = Chess(dev_mode)
-#     chess.board.custom_board({
-# 'a8':'br', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'bK', 'f8':'bR', 'g8':'__', 'h8':'bR',
-# 'a7':'__', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
-# 'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
-# 'a5':'__', 'b5':'__', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
-# 'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
-# 'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
-# 'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'wP', 'g2':'__', 'h2':'__',
-# 'a1':'wR', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'wR',
-# })
+    chess.board.custom_board({
+'a8':'br', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'bK', 'f8':'bR', 'g8':'__', 'h8':'bR',
+'a7':'bP', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
+'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
+'a5':'__', 'b5':'wP', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
+'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
+'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
+'a2':'wP', 'b2':'wP', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'wP', 'g2':'__', 'h2':'__',
+'a1':'wR', 'b1':'__', 'c1':'__', 'd1':'__', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'wR',
+})
 
     # chess.move('e1', 'g1')
     # chess.move('e8', 'c8')
@@ -141,11 +148,16 @@ if __name__ == "__main__":
         
 
         chess.move(start, to)
+        # TODO 
+        # If move is invalid, the checkmate function checks the TO position 
+        # To see if it can mate
+        # But invalid so the move is not made - THEREFORE the TO position is empty and game crash
         if chess.board.board[to].mate(chess.board.board, to):
             print('Checkmate!')
             break
     print(chess.move_log)
     chess.board.generate_preset()
+    chess.board.save_logs(chess.move_log, filename = 'test')
 
         # check for promotion pawns
         # i = 0
