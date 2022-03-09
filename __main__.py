@@ -49,12 +49,10 @@ class Chess():
         self.move_counter += 1
         Piece.update_counter(self.move_counter)
     def castle(self, board, start, to):
-        piece = board[start]
-        if piece.get_name() == 'K' and piece.x_diff(start, to):
-            rook_pos = board[start].rook_pos(board, start, to)
-            castled_rook_pos = board[start].castled_rook_pos(board, start, to)
-            self.replace(board, start, to)
-            self.replace(board, rook_pos, castled_rook_pos)
+        rook_pos = board[start].rook_pos(board, start, to)
+        castled_rook_pos = board[start].castled_rook_pos(board, start, to)
+        self.replace(board, start, to)
+        self.replace(board, rook_pos, castled_rook_pos)
     def replace(self, board, start, to):
         # Moves piece from start to to 
         # Places empty space at start location
@@ -89,7 +87,7 @@ class Chess():
             if self.valid_move(board, start, to):
                 piece = board[start]
 
-                if piece.get_name() == 'K' and piece.x_diff(start, to):
+                if piece.get_name() == 'K' and abs(piece.x_diff(start, to)) == 2:
                     self.castle(board, start, to)
                 else:
                     self.replace(board, start, to)
@@ -110,7 +108,8 @@ class Chess():
             self.valid_pos(to) 
         if valid_pos:
             valid_pos = self.is_piece(start)
-            valid_turn = self.correct_turn(start)
+            if valid_pos:
+                valid_turn = self.correct_turn(start)
 
         # We could have an error msg that contains all the errors with the move
         # but could be redundant
@@ -137,7 +136,7 @@ class Chess():
     def end_output(self, msg):
         print(msg)
         self.board.print_board()
-        print(self.move_log)
+        # print(self.move_log)
         print("---------------------------------------------------------------")
         
 def translate(position):
@@ -184,7 +183,7 @@ if __name__ == "__main__":
         # To see if it can mate
         # But invalid so the move is not made - THEREFORE the TO position is empty and game crash
 
-    print(chess.move_log)
+    # print(chess.move_log)
     chess.board.generate_preset()
     chess.board.save_logs(chess.move_log, filename = 'test')
 

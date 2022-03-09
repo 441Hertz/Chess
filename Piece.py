@@ -268,13 +268,15 @@ class King(Piece):
         self.moves = 0
 
     def is_valid_move(self, board, start, to):
-        if self.replaceable(board, to): 
-            if abs(self.x_diff(start, to)) == 2 and self.y_diff(start, to) == 0:
+        if self.replaceable(board, to):
+            x_diff = abs(self.x_diff(start, to))
+            y_diff = abs(self.y_diff(start, to))
+            if x_diff == 2 and y_diff == 0:
                 if board[start].in_check(board) == False:
                     if self.can_castle(board, start, to):
                         self.moves += 1
                         return True
-            return abs(self.x_diff(start, to)) < 2 and abs(self.y_diff(start, to)) < 2
+            return x_diff < 2 and y_diff < 2
         return False
     
     def can_castle(self, board, start, to):
@@ -283,24 +285,13 @@ class King(Piece):
             rook_pos = self.rook_pos(board, start, to)
             next_pos = self.next_rook_pos(board, start, to)
             if self.is_valid_rook(board, rook_pos):
+                # If castling queenside, need to know that the rook is not obstructed
                 if board[rook_pos].is_valid_move(board, rook_pos, next_pos):
-                    temp_pos = self.apply_unit_vector(board, self.pos(), i)
-                    bandaid = False
-                    for n in range(2):
-                        valid = self.is_valid_move(board, self.pos(), temp_pos)
-                        legal = self.is_legal(board, self.pos(), temp_pos)
-                        if valid and legal:
-                            board[temp_pos] = board[self.pos()]
-                            board[self.pos()] = '__'
-                            self.update_pos(temp_pos)
-                            temp_pos = self.apply_unit_vector(board, temp_pos, i)
-                            bandaid = True
-                        else:
-                            bandaid = False
-                    board['e' + self.pos()[1]] = board[self.pos()]
-                    board[self.pos()] == '__'
-                    self.update_pos('e' + self.pos()[1])
-                    return bandaid
+                    pos1 = self.apply_unit_vector(board, self.pos(), i)
+                    pos2 = self.apply_unit_vector(board, pos1, i)
+                    if self.is_empty(board, pos1) and self.is_empty(board, pos2):
+                        if self.is_legal(board, self.pos(), pos1) and self.is_legal(board, self.pos(), pos2):
+                            return True
         return False
     def rook_pos(self, board, start, to):
         # Returns position of the rook used for castling in the target direction
@@ -313,6 +304,7 @@ class King(Piece):
 
     def next_rook_pos(self, board, start, to):
         # Returns position of the rook used for castling in the target direction BUT SHIFTED ONE UNIT AWAY
+        # Ex. b8, g1
         i = board[start].unit_vector(start, to)['i'] 
         if i < 0:
             pos = 'b' + self.pos()[1]
