@@ -11,8 +11,11 @@ class Logic(baseUIWidget, baseUIClass):
         self.tableWidget.setColumnWidth(0, 50)
         self.tableWidget.setColumnWidth(1, 150)
         self.tableWidget.setColumnWidth(2, 150)
+        self.tableWidget.setFixedSize(500, 840)
         self.load_data()
         self.setup_board()
+
+        self.setWindowIcon(QtGui.QIcon('assets/images/simple/icon.png'))
 
         self.squares = [self.pushButton_1,
         self.pushButton_2,
