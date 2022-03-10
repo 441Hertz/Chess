@@ -37,14 +37,18 @@ class Chess():
         return True
     def is_piece(self, start):
         return self.board.board[start] != '__'
-    def valid_pos(self, pos):
+    def valid_pos(self, *positions):
         # Breaks if y pos is a string + probably more
         # Also only checks for the start pos - not the to pos
-        if len(pos) == 2:
-            valid_x = pos[0] in 'abcdefgh'
-            valid_y = pos[1] in '12345678'
-            return valid_x and valid_y
-        return False
+        for pos in positions:
+            if len(pos) == 2:
+                valid_x = pos[0] in 'abcdefgh'
+                valid_y = pos[1] in '12345678'
+                if not (valid_x and valid_y):
+                    return False
+            else:
+                return False
+        return True
     def update_counter(self):
         self.move_counter += 1
         Piece.update_counter(self.move_counter)
@@ -104,8 +108,7 @@ class Chess():
         return True
 
     def valid_input(self, start, to):
-        valid_pos = self.valid_pos(start) and \
-            self.valid_pos(to) 
+        valid_pos = self.valid_pos(start, to)
         if valid_pos:
             valid_pos = self.is_piece(start)
             if valid_pos:
