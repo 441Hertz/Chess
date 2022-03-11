@@ -1,45 +1,31 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
-from PyQt5.QtWidgets import QDialog, QApplication, QDesktopWidget, QGraphicsScene, QGraphicsItem, QGraphicsView, QHBoxLayout
+from PyQt5.QtWidgets import QDialog, QApplication, QDesktopWidget, QGraphicsScene, QGraphicsItem, QGraphicsView, QHBoxLayout, QGraphicsRectItem
 from PyQt5.QtGui import QFont, QColor, QPalette, QPixmap
 from PyQt5.QtCore import Qt
 
-baseUIClass, baseUIWidget = uic.loadUiType("chess.ui")
-class Logic(baseUIWidget, baseUIClass):
+baseUIClass, baseUIWidget = uic.loadUiType("newchess.ui")
+
+class Logic(baseUIClass, QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        
+        self.setup_table()
+        self.setup_board()
+        self.setWindowIcon(QtGui.QIcon('assets/images/simple/icon.png'))
+        self.resize(1500, 1000)
+        self.center()
+     
+        # self.setCentralWidget(Board())
+
+    def setup_table(self):
         self.tableWidget.setColumnWidth(0, 50)
         self.tableWidget.setColumnWidth(1, 150)
         self.tableWidget.setColumnWidth(2, 150)
         self.tableWidget.setFixedSize(500, 840)
         self.load_data()
-        self.setup_board()
-
-        self.setWindowIcon(QtGui.QIcon('assets/images/simple/icon.png'))
-
-        self.squares = [self.pushButton_1,
-        self.pushButton_2,
-        self.pushButton_3,
-        self.pushButton_4,
-        self.pushButton_5,
-        self.pushButton_6,
-        ]
-
-        self.resize(1500, 1000)
-        self.center()
-
-        self.board()
-    
-    def board(self):
-        self.scene = QGraphicsScene(0, 0, 100, 100)
-        pixmap = QPixmap('assets/images/simple/Board.png')
-        self.scene.addPixmap(pixmap)
-        view = QGraphicsView(self.scene)
-        hbox = QHBoxLayout(self)
-        hbox.addWidget(view)
-        self.setLayout(hbox)
 
     def load_data(self):
         log = [{'move': 1, 'white': 'e2e4', 'black': 'e7e5'}]
@@ -59,6 +45,20 @@ class Logic(baseUIWidget, baseUIClass):
         user = QDesktopWidget().availableGeometry().center()
         rect.moveCenter(user)
         self.move(rect.topLeft())
+
+class Board(QGraphicsView):
+    def __init__(self, parent = None):
+        super().__init__(parent = parent)
+        self.scene = QGraphicsScene(0, 0, 100, 100)
+        # pixmap = QPixmap('assets/images/simple/Board.png')
+        # self.scene.addPixmap(pixmap)
+        # self.setScene(self.scene)
+        length = 20
+        for i in range(8):
+            for n in range(8):
+                rect = QGraphicsRectItem(20 * i, 20 * n, length, length)
+                self.scene.addItem(rect)
+        self.setScene(self.scene)
 
 def dark_palette():
     # Returns a QPalette object with a dark style! 
@@ -82,7 +82,7 @@ def dark_palette():
 
     return dark_palette
 
-def main():
+if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
     app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
@@ -90,10 +90,8 @@ def main():
     app.setPalette(dark_palette())
 
     ui = Logic()
+    # board = Board(ui)
     ui.show()
     #ui.showMaximized()
-
+    
     sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    main()
