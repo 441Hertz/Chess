@@ -1,24 +1,29 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
-from PyQt5.QtWidgets import QDialog, QApplication, QDesktopWidget, QGraphicsScene, QGraphicsItem, QGraphicsView, QHBoxLayout, QGraphicsRectItem
-from PyQt5.QtGui import QFont, QColor, QPalette, QPixmap
+from PyQt5.QtWidgets import (QDialog, QApplication, QDesktopWidget, QGraphicsScene, QGraphicsItem, QGraphicsView, 
+QHBoxLayout, QGraphicsRectItem, QWidget, QGraphicsPixmapItem, QGridLayout, QGraphicsGridLayout)
+from PyQt5.QtGui import QFont, QColor, QPalette, QPixmap, QPainter
 from PyQt5.QtCore import Qt
 
-baseUIClass, baseUIWidget = uic.loadUiType("newchess.ui")
-
-class Logic(baseUIClass, QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
-        
+        uic.loadUi('menu.ui', self)
         self.setup_table()
-        self.setup_board()
         self.setWindowIcon(QtGui.QIcon('assets/images/simple/icon.png'))
         self.resize(1500, 1000)
         self.center()
-     
-        # self.setCentralWidget(Board())
+        self.board = Board()
+
+        self.layout_container = QGridLayout()
+        self.layout_container.addWidget(self.board, 0, 0)
+        self.layout_container.addWidget(self.tableWidget, 0, 1)
+        self.layout_container.addWidget(self.resetButton, 1, 1)
+        # self.layout_container.setSpacing(0)
+        self.central_widget = QWidget()
+        self.central_widget.setLayout(self.layout_container)
+        self.setCentralWidget(self.central_widget)
 
     def setup_table(self):
         self.tableWidget.setColumnWidth(0, 50)
@@ -37,7 +42,6 @@ class Logic(baseUIClass, QtWidgets.QMainWindow):
             self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(move['white']))
             row += 1
     
-    def setup_board(self):
         self.label.setPixmap(QtGui.QPixmap('assets/images/simple/Board.png'))
 
     def center(self):
@@ -49,17 +53,43 @@ class Logic(baseUIClass, QtWidgets.QMainWindow):
 class Board(QGraphicsView):
     def __init__(self, parent = None):
         super().__init__(parent = parent)
-        self.scene = QGraphicsScene(0, 0, 100, 100)
-        # pixmap = QPixmap('assets/images/simple/Board.png')
-        # self.scene.addPixmap(pixmap)
-        # self.setScene(self.scene)
-        length = 20
+        self.scene = QGraphicsScene()
+        self.length = 68
+        self.setup_board()
+        self.setup_squares()
+        self.setScene(self.scene)
+        for item in self.scene.items():
+            pass
+    def setup_board(self):
+        pixmap = QPixmap('assets/images/simple/Board.png').scaled(560, 560, Qt.IgnoreAspectRatio)
+        pixItem = QGraphicsPixmapItem(pixmap)
+        pixItem.setPos(-7, -7)
+        self.scene.addItem(pixItem)
+        
+    def setup_squares(self):
+        
         for i in range(8):
             for n in range(8):
-                rect = QGraphicsRectItem(20 * i, 20 * n, length, length)
+                rect = QGraphicsRectItem(self.length * i, self.length * n, self.length, self.length)
                 self.scene.addItem(rect)
-        self.setScene(self.scene)
+                self.scene.addEllipse(self.length * i, self.length * n, self.length, self.length)
+                pixmap = QPixmap('assets/images/simple/Piece=Bishop, Side=Black.png').scaled(self.length, self.length, Qt.IgnoreAspectRatio)
+                pixItem = QGraphicsPixmapItem(pixmap)
+                pixItem.setPos(self.length * i, self.length * n)
+                self.scene.addItem(pixItem)
+                pixItem.setFlags(QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemIsSelectable)
 
+    def pos_to_coord(self, x, y):
+        x = x // self.length
+        y = y // self.length
+
+        x = 'abcdefgh'[x]
+        y = '12345678'[y]
+        pos = x + y
+        return pos
+
+
+                
 def dark_palette():
     # Returns a QPalette object with a dark style! 
     # Shamelessly stolen
@@ -89,9 +119,9 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     app.setPalette(dark_palette())
 
-    ui = Logic()
-    # board = Board(ui)
+    ui = MainWindow()
     ui.show()
-    #ui.showMaximized()
     
+    # b = Board()
+    # b.show()
     sys.exit(app.exec_())
