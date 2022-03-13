@@ -65,19 +65,22 @@ class Board(QGraphicsView):
         pixItem = QGraphicsPixmapItem(pixmap)
         pixItem.setPos(-7, -7)
         self.scene.addItem(pixItem)
+        self.board = pixItem
         
     def setup_squares(self):
         
         for i in range(8):
             for n in range(8):
                 rect = QGraphicsRectItem(self.length * i, self.length * n, self.length, self.length)
+                rect.setZValue(-1)
                 self.scene.addItem(rect)
-                self.scene.addEllipse(self.length * i, self.length * n, self.length, self.length)
+                # self.scene.addEllipse(self.length * i, self.length * n, self.length, self.length)
                 pixmap = QPixmap('assets/images/simple/Piece=Bishop, Side=Black.png').scaled(self.length, self.length, Qt.IgnoreAspectRatio)
                 pixItem = QGraphicsPixmapItem(pixmap)
                 pixItem.setPos(self.length * i, self.length * n)
+                pixItem.setZValue(1)
                 self.scene.addItem(pixItem)
-                pixItem.setFlags(QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemIsSelectable)
+                # pixItem.setFlags(QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemIsSelectable)
 
     def pos_to_coord(self, x, y):
         x = x // self.length
@@ -88,6 +91,24 @@ class Board(QGraphicsView):
         pos = x + y
         return pos
 
+    def get_pieces(self):
+        for item in self.scene.items():
+            if item == self.board:
+                print('a')
+
+    def mousePressEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            # for item in self.scene.items():
+            #     if item.pos() / self.length == event.pos() / self.length:
+            #         if item != self.board and item != QGraphicsPixmapItem:
+            #             print(item, item.pos())
+            x = event.pos().x()
+            y = event.pos().y()
+            print(self.scene.itemAt(x, y, QtGui.QTransform()))
+            print(x, y, self.scene.itemAt(x, y, QtGui.QTransform()).pos())
+
+    def mouseReleaseEvent(self, event):
+        pass
 
                 
 def dark_palette():
