@@ -18,12 +18,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.layout_container = QGridLayout()
         self.layout_container.addWidget(self.board, 0, 0)
-        self.layout_container.addWidget(self.tableWidget, 0, 1)
+        # self.layout_container.addWidget(self.tableWidget, 0, 1)
         self.layout_container.addWidget(self.resetButton, 1, 1)
         # self.layout_container.setSpacing(0)
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.layout_container)
         self.setCentralWidget(self.central_widget)
+        
 
     def setup_table(self):
         self.tableWidget.setColumnWidth(0, 50)
@@ -50,6 +51,8 @@ class MainWindow(QtWidgets.QMainWindow):
         rect.moveCenter(user)
         self.move(rect.topLeft())
 
+
+
 class Board(QGraphicsView):
     def __init__(self, parent = None):
         super().__init__(parent = parent)
@@ -72,13 +75,21 @@ class Board(QGraphicsView):
         for i in range(8):
             for n in range(8):
                 rect = QGraphicsRectItem(self.length * i, self.length * n, self.length, self.length)
-                rect.setZValue(-1)
+                rect.setZValue(2)
+                rect.setOpacity(0.01)
+                rect.setFlag(QGraphicsItem.ItemIsSelectable)
+                if i + n == 0:
+                    self.corner1 = rect
+                elif i + n == 14:
+                    self.corner2 = rect
                 self.scene.addItem(rect)
+
                 # self.scene.addEllipse(self.length * i, self.length * n, self.length, self.length)
+                
                 pixmap = QPixmap('assets/images/simple/Piece=Bishop, Side=Black.png').scaled(self.length, self.length, Qt.IgnoreAspectRatio)
                 pixItem = QGraphicsPixmapItem(pixmap)
                 pixItem.setPos(self.length * i, self.length * n)
-                pixItem.setZValue(1)
+                pixItem.setZValue(10)
                 self.scene.addItem(pixItem)
                 # pixItem.setFlags(QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemIsSelectable)
 
@@ -96,16 +107,27 @@ class Board(QGraphicsView):
             if item == self.board:
                 print('a')
 
+    def convert_parent(self, pos):
+        x1 = self.corner1.pos().x()
+        y1 = self.corner2.pos().y()
+        x = pos.x() - x1
+        y = pos.y() - y1
+        print( x1, y1, x, y)
+
     def mousePressEvent(self, event):
         if event.buttons() == Qt.LeftButton:
-            # for item in self.scene.items():
-            #     if item.pos() / self.length == event.pos() / self.length:
-            #         if item != self.board and item != QGraphicsPixmapItem:
-            #             print(item, item.pos())
+            x = event.globalPos().x()
+            y = event.globalPos().y()
             x = event.pos().x()
             y = event.pos().y()
-            print(self.scene.itemAt(x, y, QtGui.QTransform()))
-            print(x, y, self.scene.itemAt(x, y, QtGui.QTransform()).pos())
+            item = self.scene.itemAt(x, y, QtGui.QTransform())
+            print(self.scene.itemAt(x, y, QtGui.QTransform()), x, y)
+            
+            # print(x, y, self.scene.itemAt(x, y, QtGui.QTransform()).pos(), self.scene.itemAt(x, y, QtGui.QTransform()))
+            event.ignore()
+            print(self.scene.selectedItems())
+            self.convert_parent(item)
+            
 
     def mouseReleaseEvent(self, event):
         pass
