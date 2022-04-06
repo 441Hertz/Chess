@@ -77,7 +77,11 @@ class Chess():
             log.append([move, start + to, ''])
         else:
             log[move - 1][2] = start + to
-
+    def console(self, start, to):
+        print(msg)
+        self.board.print_board()
+        # print(self.move_log)
+        print("---------------------------------------------------------------")
     def move(self, start, to):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         # MAYBE ADD IN THE BOARD START TO VARIABLES AS CLASS ATTRIBUTES AND UPDATE THEM HERE WHEN ITS VALID? 
@@ -85,6 +89,7 @@ class Chess():
         """ 
         What an absolute mess
         """
+        finished = True
         board = self.board.board
         if self.console:
             self.board.print_board()

@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 from Chess import Chess
 from ImageBoard import ImageBoard
+
 class CommandEvents(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -15,7 +16,7 @@ class CommandEvents(commands.Cog):
         self.final_num = ['4_']
         self.chess = Chess()
         self.board = ImageBoard(self.chess.board.board)
-    # async def setup(self):
+        
     async def load_reactions(self, board, extra):
         
         self.final_let = self.load_custom_emoji(self.final_let)
@@ -29,11 +30,9 @@ class CommandEvents(commands.Cog):
             await extra.add_reaction(emoji)
             
         for emoji in self.final_let:
-            # emoji = discord.utils.get(self.bot.emojis, name=name)
             await board.add_reaction(emoji)
             
         for emoji in self.final_num:
-
             await extra.add_reaction(emoji)
             
     @commands.command(name='play', aliases=['p'])
@@ -45,7 +44,7 @@ class CommandEvents(commands.Cog):
         # reset the reactions
         # then we have to check for errors and how to print that out
         channel = self.bot.get_channel(961025712276525267)
-        img = await channel.send(file=discord.File('assets/images/simple/board.png'))
+        img = await channel.send(file=discord.File('assets/images/simple/default.png'))
         img_link = img.attachments[0]
         board = await ctx.send(img_link)
         extra = await ctx.send('** **')
@@ -57,14 +56,14 @@ class CommandEvents(commands.Cog):
         while self.running():
             reactions = []
             emojis = []
-            while not self.moved(emojis):
+            while not self.valid_reactions(emojis):
                 reaction, user = await self.bot.wait_for("reaction_add", check=check)
                 reactions.append(reaction)
                 emojis.append(reaction.emoji)
                 
             # start, final = self.emoji_to_pos(emojis)
             # self.chess.move(start, final)
-            # self.board.add_pieces(self.chess.board.board)
+            # self.board.generate_image(self.chess.board.board)
             # self.chess.board.print_board()
             
             # img = await channel.send(file=discord.File('assets/images/simple/board.png'))
@@ -75,21 +74,20 @@ class CommandEvents(commands.Cog):
                 await reaction.remove(user)
             await ctx.send('a')
             
-            
-    def moved(self, moves):
+    def valid_reactions(self, emojis):
         #TODO 
         #Better algorithm
-        if len(moves) != 4:
+        if len(emojis) != 4:
             return False
         start_let_count = 0
         start_num_count = 0
-        final_let_count = 0
+        final_let_count = emoji
         final_num_count = 0
-        for move in moves:
-            start_let_count += self.start_let.count(move)
-            start_num_count += self.start_num.count(move)
-            final_let_count += self.final_let.count(move)
-            final_num_count += self.final_num.count(move)
+        for emoji in emojis:
+            start_let_count += self.start_let.count(emoji)
+            start_num_count += self.start_num.count(emoji)
+            final_let_count += self.final_let.count(emoji)
+            final_num_count += self.final_num.count(emoji)
         return start_let_count == 1 and start_num_count == 1 \
             and final_let_count == 1 and start_num_count == 1
                 
@@ -104,6 +102,7 @@ class CommandEvents(commands.Cog):
         
     def running(self):
         return True
+            
     def emoji_to_pos(self, reactions):
         letters = 'abcdefgh'
         numbers = '12345678'
