@@ -4,12 +4,12 @@ class Chess():
     """
     Put description of the Chess class here
     """
-    def __init__(self, dev_mode = False):
+    def __init__(self, dev_mode = False, console = False):
         self.board = Board()
-        self.board.print_board()
         self.move_counter = 1
         self.dev_mode = dev_mode
         self.move_log = []
+        self.console = console
     def promotion(self, board, to):
         y_pos = int(to[1])
         if board[to].get_name() == 'P' and (y_pos == 8 or y_pos == 1):
@@ -86,7 +86,9 @@ class Chess():
         What an absolute mess
         """
         board = self.board.board
-        print("---------------------------------------------------------------")
+        if self.console:
+            self.board.print_board()
+            print("---------------------------------------------------------------")
         if self.valid_input(start, to):
             if self.valid_move(board, start, to):
                 piece = board[start]
@@ -99,11 +101,12 @@ class Chess():
             
                 self.update_log(start, to)
                 self.update_counter()
+                if self.console:
+                    self.end_output(piece.__str__() + f' moved from {start} to {to}')
 
-                self.end_output(piece.__str__() + f' moved from {start} to {to}')
-
-                if chess.board.board[to].mate(chess.board.board, to):
-                    print('Checkmate!')
+                if board[to].mate(board, to):
+                    if self.console:
+                        print('Checkmate!')
                     return False
         return True
 
@@ -117,11 +120,11 @@ class Chess():
         # We could have an error msg that contains all the errors with the move
         # but could be redundant
         # error = ''
-
-        if not valid_pos:
-            self.end_output(f"Invalid Move: {start} to {to} \nInvalid position or empty space")
-        elif not valid_turn:
-            self.end_output(f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!")
+        if self.console:
+            if not valid_pos:
+                self.end_output(f"Invalid Move: {start} to {to} \nInvalid position or empty space")
+            elif not valid_turn:
+                self.end_output(f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!")
             
         return valid_pos and valid_turn
 
@@ -141,6 +144,7 @@ class Chess():
         self.board.print_board()
         # print(self.move_log)
         print("---------------------------------------------------------------")
+    
         
 def translate(position):
     return position
@@ -152,7 +156,7 @@ if __name__ == "__main__":
     # PAWN ENPASSANTE FUNCTION IS BROKEN 
     # WHEN LOADING IN A DEFAULT BOARD
     dev_mode = False
-    chess = Chess(dev_mode)
+    chess = Chess(dev_mode, True)
 #     chess.board.custom_board({
 # 'a8':'br', 'b8':'wQ', 'c8':'__', 'd8':'__', 'e8':'bK', 'f8':'bR', 'g8':'__', 'h8':'bR',
 # 'a7':'bP', 'b7':'__', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
@@ -189,18 +193,4 @@ if __name__ == "__main__":
     # print(chess.move_log)
     chess.board.generate_preset()
     chess.board.save_logs(chess.move_log, filename = 'test')
-
-        # check for promotion pawns
-        # i = 0
-        # while i < 8:
-        #     if not chess.turn and chess.board.board[0][i] != None and \
-        #         chess.board.board[0][i].name == 'P':
-        #         chess.promotion((0, i))
-        #         break
-        #     elif chess.turn and chess.board.board[7][i] != None and \
-        #         chess.board.board[7][i].name == 'P':
-        #         chess.promotion((7, i))
-        #         break
-        #     i += 1
-    # chess.board.print_board()
         
