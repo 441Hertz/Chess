@@ -146,16 +146,7 @@ class Piece():
         if pos in board:
             return pos
         return -1
-    def all_pieces(self, board):
-        return [value for value in board.values() if value != '__']
-    def enemy_pieces(self, board):
-        return [value for value in self.all_pieces(board) if value.get_col() != self.get_col()]
-    def ally_pieces(self, board):
-        return [value for value in self.all_pieces(board) if value.get_col() == self.get_col()]
-    def ally_king(self, board):
-        return [value for value in self.ally_pieces(board) if value.get_name() == 'K'][0]
-    def enemy_king(self, board):
-        return [value for value in self.enemy_pieces(board) if value.get_name() == 'K'][0]
+   
 
     def escape(self, board):
         vector =[
@@ -221,6 +212,16 @@ class Piece():
 
     def is_empty(self, piece):
         return piece == None  
+    def all_pieces(self, board):
+        return [value for value in board.values() if value != None]
+    def enemy_pieces(self, board):
+        return [value for value in self.all_pieces(board) if value.get_col() != self.get_col()]
+    def ally_pieces(self, board):
+        return [value for value in self.all_pieces(board) if value.get_col() == self.get_col()]
+    def ally_king(self, board):
+        return [value for value in self.ally_pieces(board) if value.get_name() == 'K'][0]
+    def enemy_king(self, board):
+        return [value for value in self.enemy_pieces(board) if value.get_name() == 'K'][0]
 
     
             
