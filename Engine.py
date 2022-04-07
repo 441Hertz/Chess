@@ -1,9 +1,6 @@
 from Board import Board
 from Piece import *
 class Chess():
-    """
-    Put description of the Chess class here
-    """
     def __init__(self, dev_mode = False, console = False):
         self.board = Board()
         self.move_counter = 1
@@ -18,91 +15,7 @@ class Chess():
         
         if self.console:
             self.start_console()
-    def promotion(self, board, to):
-        y_pos = int(to[1])
-        if board[to].get_name() == 'P' and (y_pos == 8 or y_pos == 1):
-            promote = input('Promote pawn to: ').lower()[0]
-            while promote not in ['q', 'r', 'b', 'n']:
-                print('Invalid piece!')
-                promote = input('Promote pawn to: ').lower()
-            if promote == 'r':
-                board[to] = Rook(board[to].get_col(), to)
-                board[to].moves = 1
-            elif promote == 'n':
-                board[to] = Knight(board[to].get_col(), to)
-            elif promote == 'b':
-                board[to] = Bishop(board[to].get_col(), to)
-            elif promote == 'q':
-                board[to] = Queen(board[to].get_col(), to)
-    def whose_move(self):
-        if self.move_counter % 2 == 1:
-            return ('w', 'white')
-        return ('b', 'black')
-    def which_move(self):
-        return (self.move_counter + 1) // 2
-    def correct_turn(self, start):
-        if not self.dev_mode:
-            return self.board.board[start].get_col() == self.whose_move()[0]
-        return True
-    def is_piece(self, start):
-        return self.board.board[start] != '__'
-    def valid_pos(self, *positions):
-        # Breaks if y pos is a string + probably more
-        # Also only checks for the start pos - not the to pos
-        for pos in positions:
-            if len(pos) == 2:
-                valid_x = pos[0] in 'abcdefgh'
-                valid_y = pos[1] in '12345678'
-                if not (valid_x and valid_y):
-                    return False
-            else:
-                return False
-        return True
-    def update_counter(self):
-        self.move_counter += 1
-        Piece.update_counter(self.move_counter)
-    def castle(self, board, start, to):
-        rook_pos = board[start].rook_pos(board, start, to)
-        castled_rook_pos = board[start].castled_rook_pos(board, start, to)
-        self.replace(board, start, to)
-        self.replace(board, rook_pos, castled_rook_pos)
-    def replace(self, board, start, to):
-        # Moves piece from start to to 
-        # Places empty space at start location
-        # Updates position attribute
-        board[to] = board[start]
-        board[start] = '__'
-        board[to].update_pos(to)
-    def error_msg(self):
-        pass
-    def update_log(self, start, to):
-        # TODO
-        # ASSUMES THE FIRST MOVE IS MADE BY WHITE
-        # BUT IF A CUSTOM BOARD IS LOADED AND BLACK MOVES FIRST GG
-        move = self.which_move()
-        log = self.move_log
-
-        if self.whose_move()[0] == 'w':
-            log.append([move, start + to, ''])
-        else:
-            log[move - 1][2] = start + to
-    def start_console(self):
-        self.board.print_board()
-        print("---------------------------------------------------------------")
-    def output_console(self, board, start, to):
-        print("---------------------------------------------------------------")
-        # If it did not move, then there should be a self.msg
-        if self.moved:
-            msg = self.msg
-        else:
-            msg = self.error
-        print(msg)
-        
-        self.board.print_board()
-        # print(self.move_log)
-        print("---------------------------------------------------------------")
-        if self.finished:
-            print('Checkmate!')
+            
     def move(self, start, to):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         # MAYBE ADD IN THE BOARD START TO VARIABLES AS CLASS ATTRIBUTES AND UPDATE THEM HERE WHEN ITS VALID? 
@@ -137,7 +50,20 @@ class Chess():
             self.output_console(board, start, to)
             
         return True
-
+    
+    def valid_pos(self, *positions):
+        # Breaks if y pos is a string + probably more
+        # Also only checks for the start pos - not the to pos
+        for pos in positions:
+            if len(pos) == 2:
+                valid_x = pos[0] in 'abcdefgh'
+                valid_y = pos[1] in '12345678'
+                if not (valid_x and valid_y):
+                    return False
+            else:
+                return False
+        return True
+    
     def valid_input(self, start, to):
         valid_pos = self.valid_pos(start, to)
         if valid_pos:
@@ -145,14 +71,10 @@ class Chess():
             if valid_pos:
                 valid_turn = self.correct_turn(start)
 
-        # We could have an error msg that contains all the errors with the move
-        # but could be redundant
-        # error = ''
-        if self.console:
-            if not valid_pos:
-                self.error = f"Invalid Move: {start} to {to} \nInvalid position or empty space"
-            elif not valid_turn:
-                self.error = f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!"
+        if not valid_pos:
+            self.error = f"Invalid Move: {start} to {to} \nInvalid position or empty space"
+        elif not valid_turn:
+            self.error = f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!"
             
         return valid_pos and valid_turn
 
@@ -166,14 +88,89 @@ class Chess():
             self.error = f"Invalid Move: {start} to {to} \nMove is not legal!"
 
         return valid and legal
-
-    
+            
+    def promotion(self, board, to):
+        y_pos = int(to[1])
+        if board[to].get_name() == 'P' and (y_pos == 8 or y_pos == 1):
+            promote = input('Promote pawn to: ').lower()[0]
+            while promote not in ['q', 'r', 'b', 'n']:
+                print('Invalid piece!')
+                promote = input('Promote pawn to: ').lower()
+            if promote == 'r':
+                board[to] = Rook(board[to].get_col(), to)
+                board[to].moves = 1
+            elif promote == 'n':
+                board[to] = Knight(board[to].get_col(), to)
+            elif promote == 'b':
+                board[to] = Bishop(board[to].get_col(), to)
+            elif promote == 'q':
+                board[to] = Queen(board[to].get_col(), to)
+                
+    def castle(self, board, start, to):
+        rook_pos = board[start].rook_pos(board, start, to)
+        castled_rook_pos = board[start].castled_rook_pos(board, start, to)
+        self.replace(board, start, to)
+        self.replace(board, rook_pos, castled_rook_pos)
         
-def translate(position):
-    return position
+    def replace(self, board, start, to):
+        # Moves piece from start to to 
+        # Places empty space at start location
+        # Updates position attribute
+        board[to] = board[start]
+        board[start] = '__'
+        board[to].update_pos(to)
+    
+    def start_console(self):
+        self.board.print_board()
+        print("---------------------------------------------------------------")
+        
+    def output_console(self, board, start, to):
+        print("---------------------------------------------------------------")
+        # If it did not move, then there should be a self.msg
+        if self.moved:
+            msg = self.msg
+        else:
+            msg = self.error
+        print(msg)
+        
+        self.board.print_board()
+        # print(self.move_log)
+        print("---------------------------------------------------------------")
+        if self.finished:
+            print('Checkmate!')
+            
+    def whose_move(self):
+        if self.move_counter % 2 == 1:
+            return ('w', 'white')
+        return ('b', 'black')
+    
+    def which_move(self):
+        return (self.move_counter + 1) // 2
+    
+    def correct_turn(self, start):
+        if not self.dev_mode:
+            return self.board.board[start].get_col() == self.whose_move()[0]
+        return True
+    
+    def is_piece(self, start):
+        return self.board.board[start] != '__'
 
-def code_words(code):
-    pass
+    def update_log(self, start, to):
+        # TODO
+        # ASSUMES THE FIRST MOVE IS MADE BY WHITE
+        # BUT IF A CUSTOM BOARD IS LOADED AND BLACK MOVES FIRST GG
+        move = self.which_move()
+        log = self.move_log
+
+        if self.whose_move()[0] == 'w':
+            log.append([move, start + to, ''])
+        else:
+            log[move - 1][2] = start + to
+            
+    def update_counter(self):
+        self.move_counter += 1
+        Piece.update_counter(self.move_counter)
+        
 if __name__ == "__main__":
     # TODO
     # PAWN ENPASSANTE FUNCTION IS BROKEN 
@@ -200,9 +197,6 @@ if __name__ == "__main__":
         if start == 'exit':
             break
         to = input("To: ")
-        
-        start = translate(start)
-        to = translate(to)
 
         if start == None or to == None:
             continue

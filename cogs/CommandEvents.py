@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord, asyncio
-from Chess import Chess
+from Engine import Chess
 from ImageBoard import ImageBoard
 
 class CommandEvents(commands.Cog):
