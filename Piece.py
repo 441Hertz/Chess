@@ -219,9 +219,8 @@ class Piece():
         board[start].update_pos(start)
         return not valid
 
-    def is_empty(self, board, pos):
-        # Returns True if target location is empty
-        return board[pos] == '__'  
+    def is_empty(self, piece):
+        return piece == None  
 
     
             
@@ -289,7 +288,7 @@ class King(Piece):
                 if board[rook_pos].is_valid_move(board, rook_pos, next_pos):
                     pos1 = self.apply_unit_vector(board, self.pos(), i)
                     pos2 = self.apply_unit_vector(board, pos1, i)
-                    if self.is_empty(board, pos1) and self.is_empty(board, pos2):
+                    if self.is_empty(board[pos1]) and self.is_empty(board[pos2]):
                         if self.is_legal(board, self.pos(), pos1) and self.is_legal(board, self.pos(), pos2):
                             return True
         return False
@@ -350,7 +349,7 @@ class Pawn(Piece):
             self.correct_direction(start, to):
             if self.is_diagonal(start, to):
                 # Checks if target location contains an enemy piece
-                if not self.is_empty(board, to):
+                if not self.is_empty(board[to]):
                     valid = True
                 # EN PASSENTE
                 # If target location is empty, checks for an enemy pawn adjacent that just moved two units
@@ -367,12 +366,12 @@ class Pawn(Piece):
             elif abs(self.x_diff(start, to)) == 0:
                 # Checks if the target location is empty for 1 unit moves
                 if abs(self.y_diff(start, to)) == 1:
-                    valid = self.is_empty(board, to)
+                    valid = self.is_empty(board[to])
                 # Checks if the target location is empty and path is unobstructed for 2 unit moves
                 elif abs(self.y_diff(start, to)) == 2:
                     # OR can just run line() to see if middle square is free
                     middle = self.apply_unit_vector(board, start, j = j)
-                    if self.is_empty(board, middle):
+                    if self.is_empty(board[middle]):
                         valid = self.moves == 0
         if valid:
             self.moves += 1

@@ -33,3 +33,9 @@ for key,value in t.items():
     print(key, value)
     
 print(t)
+
+class human():
+    def __init__(self):
+        pass
+h = human()
+print(human and None)

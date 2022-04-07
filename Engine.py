@@ -20,9 +20,6 @@ class Chess():
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         # MAYBE ADD IN THE BOARD START TO VARIABLES AS CLASS ATTRIBUTES AND UPDATE THEM HERE WHEN ITS VALID? 
         # THAT WAY WE DONT HAVE TO CONSTANTLY PASS IN VARIABLES FOR METHODS
-        """ 
-        What an absolute mess
-        """
         self.moved = False
         board = self.board.board
             
