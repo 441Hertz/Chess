@@ -10,6 +10,14 @@ class Chess():
         self.dev_mode = dev_mode
         self.move_log = []
         self.console = console
+        
+        self.msg = ''
+        self.error = ''
+        self.moved = False
+        self.finished = False
+        
+        if self.console:
+            self.start_console()
     def promotion(self, board, to):
         y_pos = int(to[1])
         if board[to].get_name() == 'P' and (y_pos == 8 or y_pos == 1):
@@ -19,6 +27,7 @@ class Chess():
                 promote = input('Promote pawn to: ').lower()
             if promote == 'r':
                 board[to] = Rook(board[to].get_col(), to)
+                board[to].moves = 1
             elif promote == 'n':
                 board[to] = Knight(board[to].get_col(), to)
             elif promote == 'b':
@@ -77,11 +86,23 @@ class Chess():
             log.append([move, start + to, ''])
         else:
             log[move - 1][2] = start + to
-    def console(self, start, to):
+    def start_console(self):
+        self.board.print_board()
+        print("---------------------------------------------------------------")
+    def output_console(self, board, start, to):
+        print("---------------------------------------------------------------")
+        # If it did not move, then there should be a self.msg
+        if self.moved:
+            msg = self.msg
+        else:
+            msg = self.error
         print(msg)
+        
         self.board.print_board()
         # print(self.move_log)
         print("---------------------------------------------------------------")
+        if self.finished:
+            print('Checkmate!')
     def move(self, start, to):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         # MAYBE ADD IN THE BOARD START TO VARIABLES AS CLASS ATTRIBUTES AND UPDATE THEM HERE WHEN ITS VALID? 
@@ -89,11 +110,9 @@ class Chess():
         """ 
         What an absolute mess
         """
-        finished = True
+        self.moved = False
         board = self.board.board
-        if self.console:
-            self.board.print_board()
-            print("---------------------------------------------------------------")
+            
         if self.valid_input(start, to):
             if self.valid_move(board, start, to):
                 piece = board[start]
@@ -106,13 +125,17 @@ class Chess():
             
                 self.update_log(start, to)
                 self.update_counter()
-                if self.console:
-                    self.end_output(piece.__str__() + f' moved from {start} to {to}')
-
+                    
+                self.msg = board[to].__str__() + f' moved from {start} to {to}'
+                self.moved = True
+                
                 if board[to].mate(board, to):
-                    if self.console:
-                        print('Checkmate!')
+                    self.finished = True
                     return False
+                
+        if self.console:
+            self.output_console(board, start, to)
+            
         return True
 
     def valid_input(self, start, to):
@@ -127,9 +150,9 @@ class Chess():
         # error = ''
         if self.console:
             if not valid_pos:
-                self.end_output(f"Invalid Move: {start} to {to} \nInvalid position or empty space")
+                self.error = f"Invalid Move: {start} to {to} \nInvalid position or empty space"
             elif not valid_turn:
-                self.end_output(f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!")
+                self.error = f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!"
             
         return valid_pos and valid_turn
 
@@ -138,17 +161,12 @@ class Chess():
         legal = board[start].is_legal(board, start, to)
 
         if not valid:
-            self.end_output(f"Invalid Move: {start} to {to} \nRead the rules!")
+            self.error = f"Invalid Move: {start} to {to} \nRead the rules!"
         elif not legal:
-            self.end_output(f"Invalid Move: {start} to {to} \nMove is not legal!")
+            self.error = f"Invalid Move: {start} to {to} \nMove is not legal!"
 
         return valid and legal
 
-    def end_output(self, msg):
-        print(msg)
-        self.board.print_board()
-        # print(self.move_log)
-        print("---------------------------------------------------------------")
     
         
 def translate(position):
