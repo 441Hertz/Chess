@@ -1,23 +1,21 @@
 from Piece import *
-import uuid
-import os.path
 from os import path
-import csv
-#import pprint
-#TO DO
+import os, uuid, pprint, csv
+
 class Board():
     """
     Put description of the Board class here
     """
     def __init__(self):
-        self.prefix = 'abcdefgh'
         self.board = {}
-        self.default_board()
+        self.generate_default()
         
-    def default_board(self):
-        for i in range(len(self.prefix)):
-            for n in range(len(self.prefix)):
-                self.board[f'{self.prefix[n]}{8-i}'] = '__'
+    def generate_default(self):
+        for i in range(8):
+            for n in range(8):
+                let = 'abcdefgh'[n]
+                num = 8 - i
+                self.board[let + str(num)] = None
 
         for key in self.board.keys():
             if key[1] == '2':
@@ -56,6 +54,7 @@ class Board():
 
                 elif key[0] == 'e':
                     self.board[key] = King('b', key) 
+                    
     def print_board(self):
         def letters():
             print('-', end = ' ')
@@ -65,14 +64,19 @@ class Board():
         letters()
         i = 1
         for key, value in self.board.items():
+            if not value:
+                value = '__'
+                
             if i%8 == 0:
                 print(f'{value}', end = ' ')
                 print(key[1])
                 i += 1
+                
             elif i%8 == 1:
                 print(key[1], end = ' ')
                 print(f'{value}', end = ' ')
                 i += 1
+                
             else:
                 print(f'{value}', end = ' ')
                 i += 1
@@ -80,13 +84,11 @@ class Board():
         
     def clear_board(self):
         for key in self.board.keys():
-            self.board[key] = '__'
+            self.board[key] = None
 
     def custom_board(self, preset):
         for key, value in preset.items():
-            if value == '__':
-                self.board[key] = '__'
-            elif value[1] == 'P':
+            if value[1] == 'P':
                 self.board[key] = Pawn(value[0], key)
             elif value[1] == 'R':
                 self.board[key] = Rook(value[0], key)
@@ -98,10 +100,11 @@ class Board():
                 self.board[key] = Queen(value[0], key)
             elif value[1] == 'K':
                 self.board[key] = King(value[0], key)
-        print('Custom Board Loaded')
-        self.print_board()
+            else:
+                self.board[key] = None
 
     def generate_preset(self):
+        # Prints dictionary board to console
         i = 1
         for key, value in self.board.items():
             if key == 'a8':
@@ -131,8 +134,9 @@ class Board():
             for row in log:
                 csv_writer.writerow(row)
 
-
 # TO DO
 # Have generate preset save to a file
 # Have custom board pull from a file - if not there then pull from current board
-
+if __name__ == '__main__':
+    b = Board()
+    b.print_board()
