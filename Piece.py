@@ -112,7 +112,7 @@ class Piece():
             j (int, optional): j vector to be applied. Defaults to 0.
 
         Returns:
-            str: position coordinate if it exists. Otherwise returns -1
+            str: position coordinate if it exists. Otherwise returns -1 if the coordinate is not in the board
         """
         x = self.letters.index(start[0]) + i
         y = int(start[1]) + j
@@ -171,22 +171,25 @@ class Piece():
         for v in vector:
             escape_pos = self.add_vector(board, ek.pos, i = v[0], j = v[1])
             if  escape_pos != -1:
-                valid = ek.is_valid_move(board, ek.pos, escape_pos)
+                # valid = ek.is_valid_move(board, ek.pos, escape_pos)
                 legal = ek.is_legal(board, ek.pos, escape_pos)
-                return valid and legal
+                # return valid and legal
+                if legal:
+                    return True
         return False
         
     def capture(self, board, final):
         for piece in self.enemy_pieces(board):
             valid = piece.is_valid_move(board, piece.pos, final)
             legal = piece.is_legal(board, piece.pos, final)
-            return valid and legal
+            if valid and legal:
+                return True
         return False
     
     def block(self, board, final):
         # Find the diagonal / line from checking piece to king
         if board[final].name not in ['N', 'K']:
-            king_pos = self.enemy_king(board).pos()
+            king_pos = self.enemy_king(board).pos
             x_diff = self.abs_x_diff(final, king_pos)
             y_diff = self.abs_y_diff(final, king_pos)
             i = self.x_unit(final, king_pos)
@@ -202,7 +205,10 @@ class Piece():
         
     def mate(self, board, final):
         if board[final].is_valid_move(board, final, self.enemy_king(board).pos):
-            return not (self.escape(board) or self.capture(board, final) or self.block(board, final))
+            can_escape = self.escape(board)
+            can_capture = self.capture(board, final)
+            can_block = self.block(board, final)
+            return not (can_escape or can_capture or can_block)
         return False
     
     def in_check(self, board):
@@ -211,6 +217,7 @@ class Piece():
             if piece.is_valid_move(board, piece.pos, self.ally_king(board).pos):
                 return True
         return False
+    
     def is_legal(self, board, start, final): 
         # Or just copy.deepcopy(board)  
         temp = board[final]

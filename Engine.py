@@ -16,23 +16,26 @@ class Chess():
         if self.console:
             self.start_console()
             
-    def move(self, start, to):
+    def move(self, start, to, promote_to=None):
         # TODO : ghost board? -theres some redundancy in updating the logic board and visual board
         # MAYBE ADD IN THE BOARD START TO VARIABLES AS CLASS ATTRIBUTES AND UPDATE THEM HERE WHEN ITS VALID? 
         # THAT WAY WE DONT HAVE TO CONSTANTLY PASS IN VARIABLES FOR METHODS
+        
         self.moved = False
         board = self.board.board
             
         if self.valid_input(start, to):
-            piece = board[start]
-            if piece.can_replace(board, to):
+            if board[start].can_replace(board, to):
                 if self.valid_move(board, start, to):
-
-                    if piece.name == 'K' and abs(piece.x_diff(start, to)) == 2:
+                    
+                    if self.intend_to_castle(board, start, to):
                         self.castle(board, start, to)
+                    elif self.intend_to_promote(board, start, to, promote_to):
+                        self.promotion(board, start, to, promote_to)
+                        pass
                     else:
                         self.replace(board, start, to)
-                        self.promotion(board, to)
+                        
                 
                     self.update_log(start, to)
                     self.update_counter()
@@ -49,33 +52,28 @@ class Chess():
             
         return True
     
-    def valid_pos(self, *positions):
-        # Breaks if y pos is a string + probably more
-        # Also only checks for the start pos - not the to pos
-        for pos in positions:
-            if len(pos) == 2:
-                valid_x = pos[0] in 'abcdefgh'
-                valid_y = pos[1] in '12345678'
-                if not (valid_x and valid_y):
-                    return False
-            else:
-                return False
-        return True
-    
     def valid_input(self, start, to):
-        valid_pos = self.valid_pos(start, to)
+        valid_pos = self.valid_pos(start, to) 
         if valid_pos:
             valid_pos = self.is_piece(start)
             if valid_pos:
                 valid_turn = self.correct_turn(start)
 
+        # This is for the error msg
         if not valid_pos:
             self.error = f"Invalid Move: {start} to {to} \nInvalid position or empty space"
+            
         elif not valid_turn:
             self.error = f"Invalid Move: {start} to {to} \nIt's {self.whose_move()[1]}'s turn!"
             
         return valid_pos and valid_turn
-
+    
+    def valid_pos(self, *positions):
+        for pos in positions:
+            if pos not in self.board.board.keys():
+                return False
+        return True
+    
     def valid_move(self, board, start, to):
         valid = board[start].is_valid_move(board, start, to)  
         legal = board[start].is_legal(board, start, to)
@@ -86,30 +84,50 @@ class Chess():
             self.error = f"Invalid Move: {start} to {to} \nMove is not legal!"
 
         return valid and legal
-            
-    def promotion(self, board, to):
+    
+    def intend_to_promote(self, board, start, to, promote_to):
         y_pos = int(to[1])
-        if board[to].name == 'P' and (y_pos == 8 or y_pos == 1):
-            promote = input('Promote pawn to: ').lower()[0]
-            while promote not in ['q', 'r', 'b', 'n']:
+        if board[start].name == 'P' and (y_pos == 8 or y_pos == 1):
+            if self.console:
+                return True
+            elif promote_to in ['q', 'r', 'b', 'n']:
+                return True
+            else:
+                # TODO error msg
+                pass
+            
+    def promotion(self, board, start, to, promote_to):
+        # y_pos = int(to[1])
+        # if board[to].name == 'P' and (y_pos == 8 or y_pos == 1):
+        if self.console:
+            promote_to = input('Promote pawn to: ').lower()[0]
+            while promote_to not in ['q', 'r', 'b', 'n']:
                 print('Invalid piece!')
-                promote = input('Promote pawn to: ').lower()
-            if promote == 'r':
-                board[to] = Rook(board[to].color, to)
-                board[to].moves = 1
-            elif promote == 'n':
-                board[to] = Knight(board[to].color, to)
-            elif promote == 'b':
-                board[to] = Bishop(board[to].color, to)
-            elif promote == 'q':
-                board[to] = Queen(board[to].color, to)
+                promote_to = input('Promote pawn to: ').lower()
                 
+        color = board[start].color
+        if promote_to == 'r':
+            board[to] = Rook(color, to)
+            board[to].moves = 1
+        elif promote_to == 'n':
+            board[to] = Knight(color, to)
+        elif promote_to == 'b':
+            board[to] = Bishop(color, to)
+        elif promote_to == 'q':
+            board[to] = Queen(color, to)
+        board[start] = None
+                
+    def intend_to_castle(self, board, start, to):
+        piece = board[start]
+        return piece.name == 'K' and piece.abs_x_diff(start, to) == 2
+            
     def castle(self, board, start, to):
         rook_pos = board[start].rook_pos(board, start, to)
         castled_rook_pos = board[start].castled_rook_pos(board, start, to)
         self.replace(board, start, to)
         self.replace(board, rook_pos, castled_rook_pos)
-        
+    def running(self):
+        pass
     def replace(self, board, start, to):
         # Moves piece from start to to 
         # Places empty space at start location
@@ -177,26 +195,26 @@ if __name__ == "__main__":
     # WHEN LOADING IN A DEFAULT BOARD
     dev_mode = False
     chess = Chess(dev_mode, True)
-#     chess.board.custom_board({
-# 'a8':'br', 'b8':'wQ', 'c8':None, 'd8':None, 'e8':'bK', 'f8':'bR', 'g8':None, 'h8':'bR',
-# 'a7':'bP', 'b7':None, 'c7':None, 'd7':None, 'e7':None, 'f7':None, 'g7':None, 'h7':None,
-# 'a6':None, 'b6':None, 'c6':None, 'd6':None, 'e6':None, 'f6':None, 'g6':None, 'h6':None,
-# 'a5':None, 'b5':'wP', 'c5':None, 'd5':None, 'e5':None, 'f5':None, 'g5':None, 'h5':None,
-# 'a4':None, 'b4':None, 'c4':None, 'd4':None, 'e4':None, 'f4':None, 'g4':None, 'h4':None,
-# 'a3':None, 'b3':None, 'c3':None, 'd3':None, 'e3':None, 'f3':None, 'g3':None, 'h3':None,
-# 'a2':'wP', 'b2':'wP', 'c2':None, 'd2':None, 'e2':None, 'f2':'wP', 'g2':None, 'h2':None,
-# 'a1':'wR', 'b1':None, 'c1':None, 'd1':None, 'e1':'wK', 'f1':None, 'g1':None, 'h1':'wR',
-# })
 
+#     chess.board.custom_board({
+# 'a8':'None', 'b8':'bN', 'c8':'bB', 'd8':'None', 'e8':'bK', 'f8':'bB', 'g8':'bN', 'h8':'bR',
+# 'a7':'bP', 'b7':'bP', 'c7':'bP', 'd7':'bP', 'e7':'None', 'f7':'bP', 'g7':'bP', 'h7':'bP',
+# 'a6':'None', 'b6':'None', 'c6':'None', 'd6':'None', 'e6':'None', 'f6':'bQ', 'g6':'None', 'h6':'None',
+# 'a5':'None', 'b5':'None', 'c5':'None', 'd5':'None', 'e5':'bP', 'f5':'None', 'g5':'None', 'h5':'None',
+# 'a4':'None', 'b4':'None', 'c4':'None', 'd4':'None', 'e4':'wP', 'f4':'None', 'g4':'None', 'h4':'None',
+# 'a3':'None', 'b3':'None', 'c3':'None', 'd3':'None', 'e3':'None', 'f3':'wQ', 'g3':'None', 'h3':'None',
+# 'a2':'wP', 'b2':'wP', 'c2':'wP', 'd2':'wP', 'e2':'None', 'f2':'wP', 'g2':'wP', 'h2':'wP',
+# 'a1':'wR', 'b1':'wN', 'c1':'wB', 'd1':'None', 'e1':'wK', 'f1':'wB', 'g1':'wN', 'h1':'wR',
+# })
     chess.board.custom_board({
-'a8':'bR', 'b8':'bN', 'c8':'bB', 'd8':'None', 'e8':'bK', 'f8':'bB', 'g8':'bN', 'h8':'bR',
-'a7':'bP', 'b7':'bP', 'c7':'bP', 'd7':'bP', 'e7':'None', 'f7':'bP', 'g7':'bP', 'h7':'bP',
-'a6':'None', 'b6':'None', 'c6':'None', 'd6':'None', 'e6':'None', 'f6':'bQ', 'g6':'None', 'h6':'None',
-'a5':'None', 'b5':'None', 'c5':'None', 'd5':'None', 'e5':'bP', 'f5':'None', 'g5':'None', 'h5':'None',
-'a4':'None', 'b4':'None', 'c4':'None', 'd4':'None', 'e4':'wP', 'f4':'None', 'g4':'None', 'h4':'None',
-'a3':'None', 'b3':'None', 'c3':'None', 'd3':'None', 'e3':'None', 'f3':'wQ', 'g3':'None', 'h3':'None',
-'a2':'wP', 'b2':'wP', 'c2':'wP', 'd2':'wP', 'e2':'None', 'f2':'wP', 'g2':'wP', 'h2':'wP',
-'a1':'wR', 'b1':'wN', 'c1':'wB', 'd1':'None', 'e1':'wK', 'f1':'wB', 'g1':'wN', 'h1':'wR',
+'a8':'__', 'b8':'__', 'c8':'__', 'd8':'__', 'e8':'__', 'f8':'__', 'g8':'bN', 'h8':'bK',
+'a7':'__', 'b7':'wP', 'c7':'__', 'd7':'__', 'e7':'__', 'f7':'__', 'g7':'__', 'h7':'__',
+'a6':'__', 'b6':'__', 'c6':'__', 'd6':'__', 'e6':'__', 'f6':'__', 'g6':'__', 'h6':'__',
+'a5':'__', 'b5':'__', 'c5':'__', 'd5':'__', 'e5':'__', 'f5':'__', 'g5':'__', 'h5':'__',
+'a4':'__', 'b4':'__', 'c4':'__', 'd4':'__', 'e4':'__', 'f4':'__', 'g4':'__', 'h4':'__',
+'a3':'__', 'b3':'__', 'c3':'__', 'd3':'__', 'e3':'__', 'f3':'__', 'g3':'__', 'h3':'__',
+'a2':'bP', 'b2':'__', 'c2':'__', 'd2':'__', 'e2':'__', 'f2':'__', 'g2':'__', 'h2':'__',
+'a1':'__', 'b1':'__', 'c1':'__', 'd1':'wN', 'e1':'wK', 'f1':'__', 'g1':'__', 'h1':'__',
 })
     running = True
     while running:
@@ -205,11 +223,9 @@ if __name__ == "__main__":
             break
         if start =='print':
             chess.board.generate_preset()
+            continue
         to = input("To: ")
 
-        if start == None or to == None:
-            continue
-        
         running = chess.move(start, to)
         # TODO 
         # If move is invalid, the checkmate function checks the TO position 

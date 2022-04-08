@@ -107,6 +107,8 @@ class Board():
         # Prints dictionary board to console
         i = 1
         for key, value in self.board.items():
+            if value == None:
+                value = '__'
             if key == 'a8':
                 print('{')
                 print(f"'{key}':'{value.__str__()}',", end=' ')
